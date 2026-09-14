@@ -21,6 +21,7 @@ const explorationChoices = [
 ];
 
 const app = document.querySelector('#app');
+const APP_ROOT = new URL('../', import.meta.url).pathname;
 let step = -1;
 let chosenRole = roles[0].id;
 let explorationChoice = 'visitor';
@@ -131,7 +132,7 @@ function adminView() {
 function memberRows(list) { return list.map(m=>`<tr><td><div class="person"><span>${escapeHTML(m.name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase())}</span><b>${escapeHTML(m.name)}</b></div></td><td>${escapeHTML(roles.find(r=>r.id===m.role)?.short || m.role)}</td><td>${escapeHTML(m.email)}</td><td>${escapeHTML(m.city || '—')}</td><td><i class="status-dot"></i> ${escapeHTML(m.status || 'Activ')}</td></tr>`).join('') || `<tr><td colspan="5" class="empty">Nu există membri încă.</td></tr>`; }
 function bind() {
   app.querySelector('[data-enter-app]')?.addEventListener('click',()=>{requestAppFullscreen();enteredApp=true;render();});
-  app.querySelectorAll('[data-entry-home]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();requestAppFullscreen();step=-1;go('./');}));
+  app.querySelectorAll('[data-entry-home]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();requestAppFullscreen();step=-1;go(APP_ROOT);}));
   app.querySelector('[data-auth]')?.addEventListener('click',()=>{requestAppFullscreen();go('./auth');});
   app.querySelectorAll('[data-discover]').forEach(b=>b.addEventListener('click',()=>{requestAppFullscreen();step=0;animateCarouselEntry=true;go('./');}));
   app.querySelector('#auth-form')?.addEventListener('submit',e=>{requestAppFullscreen();e.preventDefault();app.querySelector('.auth-message').textContent='Autentificarea nu este activată încă. Conectează proiectul Supabase pentru acces la conturi.';});
@@ -146,7 +147,7 @@ function bind() {
   app.querySelector('[data-install]')?.addEventListener('click',async()=>{const prompt=installPrompt;if(!prompt)return;installPrompt=null;await prompt.prompt();await prompt.userChoice;render();});
   app.querySelector('[data-install-help]')?.addEventListener('click',showIOSInstallHelp);
   app.querySelector('[data-admin]')?.addEventListener('click',()=>{requestAppFullscreen();go('./admin');});
-  app.querySelector('[data-home]')?.addEventListener('click',()=>{requestAppFullscreen();step=-1;go('./');});
+  app.querySelector('[data-home]')?.addEventListener('click',()=>{requestAppFullscreen();step=-1;go(APP_ROOT);});
   app.querySelector('[data-add]')?.addEventListener('click',()=>{requestAppFullscreen();showAdminForm();});
   app.querySelector('#filter')?.addEventListener('input',e=>{ const q=e.target.value.toLowerCase(); app.querySelector('#member-rows').innerHTML=memberRows(getMembers().filter(m=>`${m.name} ${m.email} ${m.city} ${m.role}`.toLowerCase().includes(q))); });
 }
