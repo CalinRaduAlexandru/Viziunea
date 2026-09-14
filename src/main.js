@@ -26,6 +26,8 @@ let chosenRole = roles[0].id;
 let explorationChoice = 'visitor';
 let installPrompt;
 let enteredApp = appInstalled();
+let carouselTransitionTimer=null;
+let animateCarouselEntry=false;
 
 function route() {
   const path=location.pathname.replace(/\/+$/, '');
@@ -58,7 +60,34 @@ function roleCard(role) { return `<article class="role-card ${role.color}"><div 
 function render() {
   document.body.classList.toggle('admin-mode', route() === 'admin');
   app.innerHTML = route() === 'admin' ? adminView() : route() === 'auth' ? authView() : homeView();
+  if(animateCarouselEntry){
+    const panel=app.querySelector('.onboarding>.panel, .extended-view');
+    if(panel)animateCarouselContent(panel,'in');
+    animateCarouselEntry=false;
+  }
   bind();
+}
+function animateCarouselContent(panel,direction) {
+  const frames=direction==='out'
+    ? [{opacity:1,transform:'translateX(0)'},{opacity:0,transform:'translateX(-28px)'}]
+    : [{opacity:0,transform:'translateX(-28px)'},{opacity:1,transform:'translateX(0)'}];
+  [...panel.children].filter(child=>!child.classList.contains('step-nav')).forEach(child=>{
+    if(typeof child.animate!=='function')return;
+    const animation=child.animate(frames,{duration:260,easing:'cubic-bezier(.22,.7,.2,1)',fill:'both'});
+    if(direction==='in')animation.addEventListener('finish',()=>animation.cancel(),{once:true});
+  });
+}
+function navigateCarousel(nextStep) {
+  if(carouselTransitionTimer)return;
+  const current=app.querySelector('.onboarding>.panel, .extended-view');
+  if(!current){step=nextStep;render();return;}
+  animateCarouselContent(current,'out');
+  carouselTransitionTimer=window.setTimeout(()=>{
+    step=nextStep;
+    animateCarouselEntry=step>=0&&step<=5;
+    carouselTransitionTimer=null;
+    render();
+  },260);
 }
 function homeView() {
   if(!enteredApp) return launchView();
@@ -104,13 +133,13 @@ function bind() {
   app.querySelector('[data-enter-app]')?.addEventListener('click',()=>{requestAppFullscreen();enteredApp=true;render();});
   app.querySelectorAll('[data-entry-home]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();requestAppFullscreen();step=-1;go('./');}));
   app.querySelector('[data-auth]')?.addEventListener('click',()=>{requestAppFullscreen();go('./auth');});
-  app.querySelectorAll('[data-discover]').forEach(b=>b.addEventListener('click',()=>{requestAppFullscreen();step=0;go('./');}));
+  app.querySelectorAll('[data-discover]').forEach(b=>b.addEventListener('click',()=>{requestAppFullscreen();step=0;animateCarouselEntry=true;go('./');}));
   app.querySelector('#auth-form')?.addEventListener('submit',e=>{requestAppFullscreen();e.preventDefault();app.querySelector('.auth-message').textContent='Autentificarea nu este activată încă. Conectează proiectul Supabase pentru acces la conturi.';});
-  app.querySelectorAll('[data-next]').forEach(b=>b.addEventListener('click',()=>{requestAppFullscreen();step = Math.min(step + 1, 4); render();}));
-  app.querySelector('[data-back]')?.addEventListener('click',()=>{requestAppFullscreen();if(step===0){step=-1;}else{step--;}render();});
-  app.querySelectorAll('[data-explore-role]').forEach(button=>button.addEventListener('click',()=>{explorationChoice=button.dataset.exploreRole;step=5;render();}));
-  app.querySelector('[data-explore-visitor]')?.addEventListener('click',()=>{explorationChoice='visitor';step=5;render();});
-  app.querySelector('[data-presentation-back]')?.addEventListener('click',()=>{step=4;render();});
+  app.querySelectorAll('[data-next]').forEach(b=>b.addEventListener('click',()=>{requestAppFullscreen();navigateCarousel(Math.min(step+1,4));}));
+  app.querySelector('[data-back]')?.addEventListener('click',()=>{requestAppFullscreen();navigateCarousel(step===0?-1:step-1);});
+  app.querySelectorAll('[data-explore-role]').forEach(button=>button.addEventListener('click',()=>{explorationChoice=button.dataset.exploreRole;navigateCarousel(5);}));
+  app.querySelector('[data-explore-visitor]')?.addEventListener('click',()=>{explorationChoice='visitor';navigateCarousel(5);});
+  app.querySelector('[data-presentation-back]')?.addEventListener('click',()=>navigateCarousel(4));
   app.querySelectorAll('[data-role]').forEach(b=>b.addEventListener('click',()=>{requestAppFullscreen();chosenRole=b.dataset.role;showJoinForm();}));
   app.querySelectorAll('[data-ecosystem-info]').forEach(button=>button.addEventListener('click',()=>showEcosystemInfo(button.dataset.ecosystemInfo)));
   app.querySelector('[data-fullscreen]')?.addEventListener('click',requestAppFullscreen);
