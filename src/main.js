@@ -12,6 +12,7 @@ const app = document.querySelector('#app');
 let step = -1;
 let chosenRole = roles[0].id;
 let installPrompt;
+let enteredApp = appInstalled();
 
 function route() {
   const path=location.pathname.replace(/\/+$/, '');
@@ -47,6 +48,7 @@ function render() {
   bind();
 }
 function homeView() {
+  if(!enteredApp) return launchView();
   if(step < 0) return entryView();
   const pages = [
     `<section class="cover panel"><div class="cover-art">${art('cover-scene', '◌')}</div>${image('scene-community-fire.png','cover-people')}<div class="cover-shade"></div><div class="cover-copy"><div class="brand brand-light">Viziunea</div><p>Oameni<br> Spații<br> Idei<br> Împreună</p></div><div class="cover-note">A CREATIVE<br>HOSPITALITY STORY<br>IN PROGRESS</div></section>`,
@@ -60,6 +62,10 @@ function homeView() {
   const stepLabel=`<div class="step-label"><b>${step + 1}.</b> ${['COVER','DESPRE NOI','CE FACEM','INIMA PROIECTULUI','ALEGE ROLUL'][Math.min(step,4)]}</div>`;
   const stepNav=`<nav class="step-nav"><button class="round nav-back" data-back aria-label="${step===0?'Înapoi la început':'Pasul anterior'}">←</button>${progress()}${step < 4 ? '<button class="round nav-next" data-next aria-label="Pasul următor">→</button>' : '<span class="nav-spacer" aria-hidden="true"></span>'}</nav>`;
   return `<main class="onboarding ${coverScreen?'cover-onboarding':''}">${coverScreen?'':stepLabel}${content}${stepNav}</main>`;
+}
+
+function launchView() {
+  return `<main class="launch-screen">${image('scene-creative-space.png','launch-image')}<div class="launch-shade"></div><section class="launch-content"><span class="launch-eyebrow">Oameni · Spații · Idei · Împreună</span><div class="launch-brand">Viziunea<span>✳</span></div><p>Un ecosistem creativ construit împreună.</p><button class="launch-open" data-enter-app>Deschide Viziunea <span>→</span></button></section></main>`;
 }
 
 function entryView() {
@@ -76,6 +82,7 @@ function adminView() {
 }
 function memberRows(list) { return list.map(m=>`<tr><td><div class="person"><span>${escapeHTML(m.name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase())}</span><b>${escapeHTML(m.name)}</b></div></td><td>${escapeHTML(roles.find(r=>r.id===m.role)?.short || m.role)}</td><td>${escapeHTML(m.email)}</td><td>${escapeHTML(m.city || '—')}</td><td><i class="status-dot"></i> ${escapeHTML(m.status || 'Activ')}</td></tr>`).join('') || `<tr><td colspan="5" class="empty">Nu există membri încă.</td></tr>`; }
 function bind() {
+  app.querySelector('[data-enter-app]')?.addEventListener('click',()=>{requestAppFullscreen();enteredApp=true;render();});
   app.querySelectorAll('[data-entry-home]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();requestAppFullscreen();step=-1;go('./');}));
   app.querySelector('[data-auth]')?.addEventListener('click',()=>{requestAppFullscreen();go('./auth');});
   app.querySelectorAll('[data-discover]').forEach(b=>b.addEventListener('click',()=>{requestAppFullscreen();step=0;go('./');}));
