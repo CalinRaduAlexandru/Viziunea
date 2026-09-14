@@ -61,7 +61,7 @@ function homeView() {
   const pages = [
     `<section class="cover panel"><div class="cover-art">${art('cover-scene', '◌')}</div>${image('scene-community-fire.png','cover-people')}<div class="cover-shade"></div><div class="cover-copy"><div class="brand brand-light">Viziunea</div><p>Oameni<br> Spații<br> Idei<br> Împreună</p></div></section>`,
     `<section class="panel about"><span class="eyebrow">Viziunea</span><h1>Un loc unde arta prinde viață împreună cu oamenii<span class="spark">✳</span></h1><p class="lead">Viziunea este un hub creativ cu spații, resurse și o comunitate care transformă idei în experiențe reale.</p><div class="art sunset sunset-photo">${image('scene-sunset-group.png','sunset-image')}</div></section>`,
-    `<section class="panel what"><span class="eyebrow">Mai mult decât un spațiu.</span><h1>Un ecosistem creativ.</h1><div class="ecosystem-grid">${ecosystemAreas.map(area=>`<div class="ecosystem-card">${image(area.file,'ecosystem-art',`Ilustrație: ${area.title}`)}<button class="ecosystem-info" data-ecosystem-info="${area.id}" aria-label="Detalii: ${area.title}" aria-haspopup="dialog">i</button></div>`).join('')}</div></section>`,
+    `<section class="panel what"><div class="ecosystem-grid">${ecosystemAreas.map(area=>`<div class="ecosystem-card">${image(area.file,'ecosystem-art',`Ilustrație: ${area.title}`)}<button class="ecosystem-info" data-ecosystem-info="${area.id}" aria-label="Detalii: ${area.title}" aria-haspopup="dialog">i</button></div>`).join('')}</div></section>`,
     `<section class="panel inside"><span class="eyebrow">Inima proiectului</span><h1>O comunitate de creație care construiește experiențe reale.</h1><div class="heart">${image('icon-heart-community.png','heart-icon')}</div><ul class="checks"><li>Oameni care se susțin</li><li>Spații pentru idei curajoase</li><li>Învățare prin practică</li><li>De la concept la realitate</li><li>Proiecte cu impact cultural și social</li></ul></section>`,
     `<section class="panel choose"><span class="eyebrow">Cum vrei să continui?</span><h1>Alege rolul care ți se potrivește.</h1><p class="lead">Fiecare drum duce în aceeași direcție: mai multă artă în lume.</p><div class="role-links">${roles.map(r=>`<button class="role-link ${r.color}" data-role="${r.id}">${image(r.icon,'role-link-icon')}<span>${r.short}</span><b>›</b></button>`).join('')}</div></section>`,
   ];
@@ -151,15 +151,32 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   navigator.serviceWorker.register(new URL('../service-worker.js', import.meta.url),{updateViaCache:'none'}).then(registration=>registration.update()).catch(()=>{});
 }
 let refreshStart=null;
+let carouselSwipeStart=null;
 window.addEventListener('touchstart',event=>{
-  if(event.touches.length!==1){refreshStart=null;return;}
+  if(event.touches.length!==1){refreshStart=null;carouselSwipeStart=null;return;}
   const touch=event.touches[0];
   refreshStart=touch.clientY<=130?{x:touch.clientX,y:touch.clientY}:null;
+  const target=event.target;
+  carouselSwipeStart=route()==='home'&&step>=0&&target.closest?.('.onboarding')&&!target.closest?.('button,a,input,dialog')?{x:touch.clientX,y:touch.clientY}:null;
 },{passive:true});
 window.addEventListener('touchmove',event=>{
-  if(!refreshStart||event.touches.length!==1)return;
+  if(event.touches.length!==1)return;
   const touch=event.touches[0];
-  if(touch.clientY-refreshStart.y>100&&Math.abs(touch.clientX-refreshStart.x)<60){refreshStart=null;location.reload();}
+  if(refreshStart){
+    const refreshDx=touch.clientX-refreshStart.x;
+    const refreshDy=touch.clientY-refreshStart.y;
+    if(refreshDy>100&&Math.abs(refreshDx)<60){refreshStart=null;carouselSwipeStart=null;location.reload();return;}
+  }
+  if(carouselSwipeStart){
+    const dx=touch.clientX-carouselSwipeStart.x;
+    const dy=touch.clientY-carouselSwipeStart.y;
+    if(Math.abs(dx)<=65||Math.abs(dx)<=Math.abs(dy)*1.25)return;
+    const direction=dx<0?1:-1;
+    carouselSwipeStart=null;refreshStart=null;
+    if(direction>0)step=Math.min(step+1,4);
+    else step=step>0?step-1:-1;
+    render();
+  }
 },{passive:true});
-window.addEventListener('touchend',()=>{refreshStart=null;},{passive:true});
+window.addEventListener('touchend',()=>{refreshStart=null;carouselSwipeStart=null;},{passive:true});
 render();
