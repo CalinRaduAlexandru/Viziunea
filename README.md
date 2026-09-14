@@ -1,17 +1,38 @@
 # Viziunea PWA
 
-Onboarding pentru comunitatea Viziunea, construit cu vanilla JavaScript și CSS. Pagina de intrare oferă acces la autentificare demo sau la turul de onboarding. Include un panel `/admin`, date demo persistente în browser, manifest și service worker pentru instalare și utilizare offline.
+MVP-ul demonstrează o buclă de orientare: intenție → căutare/matching → soluție sau nevoie deschisă → sugestie comunitară → moderare → notificare in-app. Interfața rămâne vanilla JavaScript + CSS, mobile-first și fără build step; datele și regulile sunt izolate în servicii mici sub `src/services/`.
 
-## Pornire locală
+## Rulare și demo
 
-Servește directorul cu orice server static, de exemplu `python3 -m http.server 8000`, apoi deschide `http://localhost:8000`. `/auth` arată formularul demonstrativ, iar `/admin` panelul demo. Autentificarea nu este conectată încă; înainte de date reale, protejează rutele de admin cu Supabase Auth și roluri de staff. Interfața încape în viewport, iar pull-to-refresh-ul browserului rămâne disponibil. Pe Android, o atingere pe o opțiune cere fullscreen; pentru dispariția barelor chiar de la lansare, instalează PWA-ul. Pe iPhone, adaugă-l pe ecranul principal din meniul Partajare și lansează-l de acolo. Chrome-ul unei file obișnuite este controlat de browser și nu poate fi ascuns permanent de codul paginii.
+Servește repository-ul cu un server static, de exemplu `python3 -m http.server 8000`, apoi deschide `http://localhost:8000`. Intrarea este `/`, onboarding-ul conduce la căutare, iar rutele `/auth` și `/admin` sunt disponibile direct. Demo mode este activ când Supabase nu este configurat: catalogul inițial este seed-uit în browser, iar membrii, nevoile, sugestiile și notificările se păstrează în localStorage. Pentru a testa moderarea, creează o nevoie cu o adresă de email demo, deschide comunitatea cu altă adresă, trimite o sugestie și aprob-o din `/admin`.
 
-## Model de date
+## Configurare Supabase
 
-`supabase/schema.sql` creează tabelul stabil `members`, cu UUID, email unic, rol validat, status, timestampuri și indexuri. Schema este separată de UI și accesată prin `src/services/members.js`. În demo, înscrierile noi rămân în localStorage pe dispozitivul curent. Pentru Supabase, completează URL-ul proiectului și cheia publică anon în `src/config.js`, apoi rulează SQL-ul din Supabase SQL Editor.
+1. Creează un proiect Supabase și copiază Project URL și cheia publică `anon` în `src/config.js` (`supabaseUrl`, `supabaseAnonKey`). Nu introduce cheia `service_role` în frontend.
+2. Rulează integral `supabase/schema.sql` în SQL Editor. Scriptul definește tabelele, indexurile, trigger-ele, view-ul anonim, politicile RLS și date demo pentru director.
+3. În Supabase Auth, activează autentificarea prin email și adaugă URL-urile aplicației la Site URL / Redirect URLs. Magic link-ul folosește ruta `/auth/`.
+4. Autentifică o dată contul care va administra aplicația. Apoi rulează în SQL Editor instrucțiunea comentată de la finalul `schema.sql`, cu emailul administratorului, pentru a-l adăuga în `staff_users`. Drepturile staff nu pot fi acordate din client.
 
-Cheia `service_role` nu trebuie expusă niciodată în browser. Panelul actual folosește date demo; înainte de a păstra date reale de membri, configurează Supabase Auth pentru administratori și politici RLS staff-only pentru citire și modificare.
+În Supabase, membrii autentificați pot crea și gestiona propriile nevoi, iar comunitatea citește doar view-ul `community_needs`, fără `requester_id` ori date de cont. Sugestiile noi sunt pending; doar staff le poate modera. Aprobarea creează notificarea in-app pentru solicitant. Cheia `service_role` nu trebuie niciodată publicată sau folosită în codul browserului.
 
-## Publicare GitHub Pages
+## Structura aplicației
 
-Activează GitHub Pages din Settings → Pages, branch `main`, folder `/ (root)`. Fișierele sunt statice și nu necesită build.
+- `src/main.js` gestionează navigarea și compune ecranele.
+- `src/views/orientation.js` conține ecranele MVP și escaparea conținutului dinamic.
+- `src/services/auth.js`, `directory.js`, `needs.js`, `suggestions.js`, `notifications.js` izolează autentificarea și accesul la date; serviciile folosesc Supabase configurat sau fallback-ul demo.
+- `supabase/schema.sql` este sursa modelului persistent. `members` rămâne tabel separat; directorul folosește entitatea generică `directory_items`.
+- `/` prezintă Viziunea și onboarding-ul; `/auth` autentifică; `/admin` oferă taburile Membri, Nevoi, Sugestii și Director.
+
+## Potrivire geografică MVP
+
+Directorul distinge `fixed`, `travels`, `remote`, `hybrid` și `location_independent`; înregistrează `city`, `county`, `region`, `country`, `service_area_scope` și `travel_radius_km`. Nevoile păstrează locația, preferința, distanța maximă și dacă remote este acceptat. Căutarea extinde gradual oraș → apropiere → județ → regiune → național. Experiențele și spațiile fixe nu sunt înlocuite cu rezultate naționale; serviciile remote nu sunt penalizate când utilizatorul acceptă remote.
+
+MVP-ul nu folosește hărți, geocoding sau coordonate lat/lng. Apropierea este estimată din oraș/județ/regiune, iar `travel_radius_km` și `max_distance_km` sunt păstrate pentru dezvoltarea următoarei etape, fără calcul geodezic. Fără locație introdusă, matching-ul nu impune o zonă.
+
+## Limite curente
+
+Matching-ul este determinist și local, fără AI/ML. Notificările sunt doar in-app; nu există email tranzacțional. Datele demo trăiesc în browserul curent și nu sincronizează între utilizatori. Pentru date persistente și fluxuri comunitare reale trebuie configurat Supabase, Auth și primul staff user. GitHub Pages poate găzdui aplicația statică; rutele folosesc fallback-ul SPA existent.
+
+## Publicare
+
+Aplicația nu are pas de build. GitHub Pages poate servi conținutul static din root-ul repository-ului. După modificarea fișierelor PWA, actualizează lista `SHELL` și versiunea cache din `service-worker.js`.

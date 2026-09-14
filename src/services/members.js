@@ -14,6 +14,12 @@ export function getMembers() {
   try { const saved=localStorage.getItem(STORAGE_KEY); return saved ? JSON.parse(saved) : demoMembers; }
   catch { return demoMembers; }
 }
+export async function getAdminMembers() {
+  if (!supabase) return getMembers();
+  const { data, error } = await supabase.from('members').select('id,name,email,city,role,status,created_at').order('created_at',{ascending:false});
+  if (error) throw error;
+  return (data || []).map(row=>({...row,createdAt:row.created_at}));
+}
 export async function saveMember(input) {
   const record={id:crypto.randomUUID(),name:input.name.trim(),email:input.email.trim().toLowerCase(),city:input.city.trim(),role:input.role,status:'Activ',createdAt:new Date().toISOString()};
   if (supabase) {
