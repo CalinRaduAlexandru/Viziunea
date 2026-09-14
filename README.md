@@ -1,10 +1,10 @@
 # Viziunea PWA
 
-Onboarding pentru comunitatea Viziunea, construit cu vanilla JavaScript și CSS. Include un panel `/admin`, date demo persistente în browser, manifest și service worker pentru instalare și utilizare offline.
+Onboarding pentru comunitatea Viziunea, construit cu vanilla JavaScript și CSS. Pagina de intrare oferă acces la autentificare demo sau la turul de onboarding. Include un panel `/admin`, date demo persistente în browser, manifest și service worker pentru instalare și utilizare offline.
 
 ## Pornire locală
 
-Servește directorul cu orice server static, de exemplu `python3 -m http.server 8000`, apoi deschide `http://localhost:8000`. `/admin` arată panelul demo. Navigarea de admin este demonstrativă; înainte de date reale, protejează ruta cu Supabase Auth și roluri de staff.
+Servește directorul cu orice server static, de exemplu `python3 -m http.server 8000`, apoi deschide `http://localhost:8000`. `/auth` arată formularul demonstrativ, iar `/admin` panelul demo. Autentificarea nu este conectată încă; înainte de date reale, protejează rutele de admin cu Supabase Auth și roluri de staff.
 
 ## Model de date
 

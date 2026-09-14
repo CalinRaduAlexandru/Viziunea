@@ -9,12 +9,15 @@ const roles = [
 ];
 
 const app = document.querySelector('#app');
-let step = 0;
+let step = -1;
 let chosenRole = roles[0].id;
 let installPrompt;
 
 function route() {
-  return location.pathname.replace(/\/+$/, '').endsWith('/admin') ? 'admin' : 'home';
+  const path=location.pathname.replace(/\/+$/, '');
+  if(path.endsWith('/admin')) return 'admin';
+  if(path.endsWith('/auth')) return 'auth';
+  return 'home';
 }
 function go(path) { history.pushState({}, '', path); render(); }
 function escapeHTML(value = '') { return String(value).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
@@ -24,10 +27,11 @@ function roleCard(role) { return `<article class="role-card ${role.color}"><div 
 
 function render() {
   document.body.classList.toggle('admin-mode', route() === 'admin');
-  app.innerHTML = route() === 'admin' ? adminView() : homeView();
+  app.innerHTML = route() === 'admin' ? adminView() : route() === 'auth' ? authView() : homeView();
   bind();
 }
 function homeView() {
+  if(step < 0) return entryView();
   const pages = [
     `<section class="cover panel"><div class="cover-art">${art('cover-scene', '◌')}</div><div class="cover-shade"></div><div class="cover-copy"><div class="brand brand-light">Viziunea</div><p>Oameni<br> Spații<br> Idei<br> Împreună</p></div><div class="cover-note">A CREATIVE<br>HOSPITALITY STORY<br>IN PROGRESS</div><button class="round next" data-next aria-label="Începe">→</button></section>`,
     `<section class="panel about"><span class="eyebrow">Viziunea</span><h1>Un loc unde arta prinde viață împreună cu oamenii<span class="spark">✳</span></h1><p class="lead">Viziunea este un hub creativ cu spații, resurse și o comunitate care transformă idei în experiențe reale.</p>${art('sunset', '◡')}<button class="round next" data-next aria-label="Continuă">→</button></section>`,
@@ -39,17 +43,29 @@ function homeView() {
   return `<header class="topbar"><a href="./" class="brand">Viziunea<span>✳</span></a><button class="text-button admin-link" data-admin>Admin ↗</button></header><main class="onboarding"><div class="step-label"><b>${step + 1}.</b> ${['COVER','DESPRE NOI','CE FACEM','INIMA PROIECTULUI','ALEGE ROLUL'][Math.min(step,4)]}</div>${content}<nav class="step-nav">${progress()}<button class="round nav-next" data-next aria-label="Pasul următor">→</button></nav></main><footer class="site-footer">© 2026 Viziunea <span>Făcută împreună, cu sens.</span></footer>`;
 }
 
+function entryView() {
+  return `<header class="topbar"><a href="./" class="brand" data-entry-home>Viziunea<span>✳</span></a><button class="text-button admin-link" data-admin>Admin ↗</button></header><main class="entry-wrap"><section class="entry-hero"><div class="entry-art">${art('cover-scene','◌')}<div class="entry-shade"></div><div class="entry-copy"><span class="eyebrow">Oameni · Spații · Idei · Împreună</span><h1>Viziunea</h1><p>Un ecosistem creativ construit împreună.</p></div><span class="entry-star">✳</span></div><div class="entry-options"><span class="eyebrow">Bine ai venit</span><h2>Unde vrei să mergem?</h2><button class="entry-choice existing" data-auth><span class="choice-icon">↗</span><span><b>Fac parte din comunitate</b><small>Intră în contul tău Viziunea</small></span><strong>→</strong></button><button class="entry-choice discover" data-discover><span class="choice-icon">✳</span><span><b>Doresc să descopăr Viziunea</b><small>Află ce construim împreună</small></span><strong>→</strong></button><p class="entry-footnote">Un loc unde arta prinde viață împreună cu oamenii.</p></div></section></main><footer class="site-footer">© 2026 Viziunea <span>Făcută împreună, cu sens.</span></footer>`;
+}
+
+function authView() {
+  return `<header class="topbar"><a href="./" class="brand" data-entry-home>Viziunea<span>✳</span></a><span class="demo-badge">AUTENTIFICARE DEMO</span></header><main class="auth-wrap"><section class="auth-card"><button class="text-button auth-back" data-entry-home>← Înapoi</button><span class="auth-mark">✳</span><span class="eyebrow">Comunitatea Viziunea</span><h1>Bine ai revenit.</h1><p class="auth-intro">Autentifică-te pentru a continua în spațiul comunității.</p><form id="auth-form"><label>Email<input type="email" name="email" autocomplete="email" required placeholder="tu@exemplu.ro"></label><label>Parolă<input type="password" name="password" autocomplete="current-password" required minlength="6" placeholder="••••••••"></label><button class="primary" type="submit">Autentifică-te <span>→</span></button></form><p class="auth-message" aria-live="polite">Autentificarea este demonstrativă momentan; conturile Supabase nu sunt conectate.</p><div class="auth-divider"><span>ești nou aici?</span></div><button class="auth-discover" data-discover>Doresc să descopăr Viziunea <span>→</span></button></section></main><footer class="site-footer">© 2026 Viziunea <span>Făcută împreună, cu sens.</span></footer>`;
+}
+
 function adminView() {
   const list = getMembers();
   return `<header class="admin-top"><a href="./" class="brand">Viziunea<span>✳</span></a><span class="demo-badge">DEMO • date locale</span><button class="text-button" data-home>← Înapoi la site</button></header><main class="admin-wrap"><div class="admin-title"><div><span class="eyebrow">Spațiul echipei</span><h1>Administrare</h1><p>Gestionează membrii comunității și informațiile lor esențiale.</p></div><button class="primary" data-add>+ Adaugă membru</button></div><div class="stats"><div><span>Membri înregistrați</span><b>${list.length}</b></div><div><span>Roluri active</span><b>${new Set(list.map(m=>m.role)).size}</b></div><div><span>Ultimul membru</span><b>${list.length ? escapeHTML(list[list.length - 1].name.split(' ')[0]) : '—'}</b></div></div><section class="table-card"><div class="table-head"><div><h2>Membri</h2><span>Lista comunității Viziunea</span></div><label class="search">⌕ <input type="search" id="filter" placeholder="Caută membri" /></label></div><div class="table-scroll"><table><thead><tr><th>Membru</th><th>Rol</th><th>Email</th><th>Oraș</th><th>Status</th></tr></thead><tbody id="member-rows">${memberRows(list)}</tbody></table></div></section><p class="admin-hint">Această demonstrație salvează datele în browser. Schema Supabase pregătită pentru conectare se află în <code>supabase/schema.sql</code>.</p></main>`;
 }
 function memberRows(list) { return list.map(m=>`<tr><td><div class="person"><span>${escapeHTML(m.name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase())}</span><b>${escapeHTML(m.name)}</b></div></td><td>${escapeHTML(roles.find(r=>r.id===m.role)?.short || m.role)}</td><td>${escapeHTML(m.email)}</td><td>${escapeHTML(m.city || '—')}</td><td><i class="status-dot"></i> ${escapeHTML(m.status || 'Activ')}</td></tr>`).join('') || `<tr><td colspan="5" class="empty">Nu există membri încă.</td></tr>`; }
 function bind() {
+  app.querySelectorAll('[data-entry-home]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();step=-1;go('./');}));
+  app.querySelector('[data-auth]')?.addEventListener('click',()=>go('./auth'));
+  app.querySelectorAll('[data-discover]').forEach(b=>b.addEventListener('click',()=>{step=0;go('./');window.scrollTo({top:0,behavior:'smooth'});}));
+  app.querySelector('#auth-form')?.addEventListener('submit',e=>{e.preventDefault();app.querySelector('.auth-message').textContent='Autentificarea nu este activată încă. Conectează proiectul Supabase pentru acces la conturi.';});
   app.querySelectorAll('[data-next]').forEach(b=>b.addEventListener('click',()=>{ step = Math.min(step + 1, 5); render(); window.scrollTo({top:0,behavior:'smooth'}); }));
   app.querySelectorAll('[data-prev]').forEach(b=>b.addEventListener('click',()=>{ step=4; render(); }));
   app.querySelectorAll('[data-role]').forEach(b=>b.addEventListener('click',()=>{ chosenRole=b.dataset.role; showJoinForm(); }));
   app.querySelector('[data-admin]')?.addEventListener('click',()=>go('./admin'));
-  app.querySelector('[data-home]')?.addEventListener('click',()=>go('./'));
+  app.querySelector('[data-home]')?.addEventListener('click',()=>{step=-1;go('./');});
   app.querySelector('[data-add]')?.addEventListener('click',showAdminForm);
   app.querySelector('#filter')?.addEventListener('input',e=>{ const q=e.target.value.toLowerCase(); app.querySelector('#member-rows').innerHTML=memberRows(getMembers().filter(m=>`${m.name} ${m.email} ${m.city} ${m.role}`.toLowerCase().includes(q))); });
 }
