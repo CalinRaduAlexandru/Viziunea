@@ -13,7 +13,7 @@ export const INTENTS = [
 ];
 
 export function renderIntentStep(selected) {
-  return `<section class="panel intent-step"><span class="eyebrow">Pornim de la ce ai nevoie acum</span><h1>Ce te aduce la Viziunea?</h1><p class="lead">Poți explora direcții diferite oricând. Intenția ta nu îți fixează un rol.</p><div class="intent-list">${INTENTS.map(item=>`<button class="intent-option ${selected===item.id?'selected':''}" data-intent="${item.id}" aria-pressed="${selected===item.id}"><span>${item.icon}</span><b>${item.label}</b><i>${selected===item.id?'✓':'→'}</i></button>`).join('')}</div><button class="primary intent-continue" data-intent-continue ${selected?'':'disabled'}>Continuă <span>→</span></button></section>`;
+  return `<section class="panel intent-step"><span class="eyebrow">Pornim de la ce ai nevoie acum</span><h1>Ce te aduce la Viziunea?</h1><p class="lead">Poți explora direcții diferite oricând. Intenția ta nu îți fixează un rol.</p><div class="intent-list">${INTENTS.map(item=>`<button class="intent-option ${selected===item.id?'selected':''}" data-intent="${item.id}" aria-pressed="${selected===item.id}"><span>${item.icon}</span><b>${item.label}</b><i>${selected===item.id?'✓':'→'}</i></button>`).join('')}</div><button class="primary intent-continue" data-intent-continue data-next ${selected?'':'disabled'}>Continuă <span>→</span></button></section>`;
 }
 
 function locationText(item) {
