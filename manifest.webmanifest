@@ -1,0 +1,11 @@
+{
+  "name": "Viziunea — oameni, spații, idei",
+  "short_name": "Viziunea",
+  "description": "Un ecosistem creativ construit împreună.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f4ed",
+  "theme_color": "#f7f4ed",
+  "icons": [{ "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
