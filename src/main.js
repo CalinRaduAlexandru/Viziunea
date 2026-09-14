@@ -7,6 +7,14 @@ const roles = [
   { id: 'collaborator', title: 'Colaborator / Producător', short: 'Colaborator / Producător', icon: 'icon-role-collaborator.png', scene: 'scene-stage-production.png', color: 'purple', intro: 'Vrei să construim împreună proiecte și producții.', points: ['Echipă multidisciplinară', 'Producție scenografie & recuzită', 'Logistică & implementare', 'Flexibil, de la idei mici la proiecte mari'], action: 'Continuă ca partener', art: '⚙' },
   { id: 'organizer', title: 'Organizator / Client', short: 'Organizator / Client', icon: 'icon-role-organizer.png', scene: 'scene-festival-tent.png', color: 'gold', intro: 'Ai un eveniment, un spațiu sau o idee și cauți un partener.', points: ['Experiențe personalizate', 'Artiști, decoruri, activări', 'Producție completă sau pe module', 'Un partener creativ și de încredere'], action: 'Continuă ca organizator', art: '↗' },
 ];
+const ecosystemAreas = [
+  { id:'spaces', file:'activity-spaces-locations.png', title:'Spații și locații', description:'Locuri primitoare pentru întâlniri, ateliere și proiecte creative. Fiecare spațiu poate fi adaptat oamenilor și ideilor care îl animă.' },
+  { id:'academy', file:'activity-workshops-academy.png', title:'Ateliere și Academy', description:'Învățare practică prin ateliere, mentorat și schimb de experiență cu oameni activi în domeniile lor.' },
+  { id:'production', file:'activity-production-scenography.png', title:'Producție și scenografie', description:'De la primele schițe la decoruri, recuzită și producție tehnică, ideile prind formă împreună.' },
+  { id:'events', file:'activity-events-experiences.png', title:'Evenimente și experiențe', description:'Întâlniri și evenimente construite în jurul comunității, artei și experiențelor împărtășite.' },
+  { id:'art', file:'activity-art-marketing.png', title:'Artă și marketing', description:'Concepte vizuale și povești care ajută proiectele creative să ajungă la oamenii potriviți.' },
+  { id:'nature', file:'activity-nature-community.png', title:'Natură și comunitate', description:'Activități și contexte în aer liber care apropie oamenii și deschid loc pentru idei noi.' },
+];
 
 const app = document.querySelector('#app');
 let step = -1;
@@ -53,7 +61,7 @@ function homeView() {
   const pages = [
     `<section class="cover panel"><div class="cover-art">${art('cover-scene', '◌')}</div>${image('scene-community-fire.png','cover-people')}<div class="cover-shade"></div><div class="cover-copy"><div class="brand brand-light">Viziunea</div><p>Oameni<br> Spații<br> Idei<br> Împreună</p></div><div class="cover-note">A CREATIVE<br>HOSPITALITY STORY<br>IN PROGRESS</div></section>`,
     `<section class="panel about"><span class="eyebrow">Viziunea</span><h1>Un loc unde arta prinde viață împreună cu oamenii<span class="spark">✳</span></h1><p class="lead">Viziunea este un hub creativ cu spații, resurse și o comunitate care transformă idei în experiențe reale.</p><div class="art sunset sunset-photo">${image('scene-sunset-group.png','sunset-image')}</div></section>`,
-    `<section class="panel what"><span class="eyebrow">Mai mult decât un spațiu.</span><h1>Un ecosistem creativ.</h1><div class="ecosystem-grid">${[['activity-spaces-locations.png','Spații și locații'],['activity-workshops-academy.png','Ateliere și Academy'],['activity-production-scenography.png','Producție și scenografie'],['activity-events-experiences.png','Evenimente și experiențe'],['activity-art-marketing.png','Artă și marketing'],['activity-nature-community.png','Natură și comunitate']].map(([file,label])=>`<div class="ecosystem-card">${image(file,'ecosystem-art')}<span>${label}</span></div>`).join('')}</div></section>`,
+    `<section class="panel what"><span class="eyebrow">Mai mult decât un spațiu.</span><h1>Un ecosistem creativ.</h1><div class="ecosystem-grid">${ecosystemAreas.map(area=>`<div class="ecosystem-card">${image(area.file,'ecosystem-art',`Ilustrație: ${area.title}`)}<button class="ecosystem-info" data-ecosystem-info="${area.id}" aria-label="Detalii: ${area.title}" aria-haspopup="dialog">i</button></div>`).join('')}</div></section>`,
     `<section class="panel inside"><span class="eyebrow">Inima proiectului</span><h1>O comunitate de creație care construiește experiențe reale.</h1><div class="heart">${image('icon-heart-community.png','heart-icon')}</div><ul class="checks"><li>Oameni care se susțin</li><li>Spații pentru idei curajoase</li><li>Învățare prin practică</li><li>De la concept la realitate</li><li>Proiecte cu impact cultural și social</li></ul></section>`,
     `<section class="panel choose"><span class="eyebrow">Cum vrei să continui?</span><h1>Alege rolul care ți se potrivește.</h1><p class="lead">Fiecare drum duce în aceeași direcție: mai multă artă în lume.</p><div class="role-links">${roles.map(r=>`<button class="role-link ${r.color}" data-role="${r.id}">${image(r.icon,'role-link-icon')}<span>${r.short}</span><b>›</b></button>`).join('')}</div></section>`,
   ];
@@ -90,6 +98,7 @@ function bind() {
   app.querySelectorAll('[data-next]').forEach(b=>b.addEventListener('click',()=>{requestAppFullscreen();step = Math.min(step + 1, 4); render();}));
   app.querySelector('[data-back]')?.addEventListener('click',()=>{requestAppFullscreen();if(step===0){step=-1;}else{step--;}render();});
   app.querySelectorAll('[data-role]').forEach(b=>b.addEventListener('click',()=>{requestAppFullscreen();chosenRole=b.dataset.role;showJoinForm();}));
+  app.querySelectorAll('[data-ecosystem-info]').forEach(button=>button.addEventListener('click',()=>showEcosystemInfo(button.dataset.ecosystemInfo)));
   app.querySelector('[data-fullscreen]')?.addEventListener('click',requestAppFullscreen);
   app.querySelector('[data-install]')?.addEventListener('click',async()=>{const prompt=installPrompt;if(!prompt)return;installPrompt=null;await prompt.prompt();await prompt.userChoice;render();});
   app.querySelector('[data-install-help]')?.addEventListener('click',showIOSInstallHelp);
@@ -103,6 +112,20 @@ function showIOSInstallHelp() {
   dialog.className='join-dialog install-dialog';
   dialog.innerHTML='<button class="dialog-close" aria-label="Închide">×</button><span class="eyebrow">Instalează aplicația</span><h2>Viziunea, pe ecranul principal.</h2><p>În Safari, apasă butonul Partajare, apoi alege „Adaugă la ecranul principal”. Deschide Viziunea din pictograma nouă pentru a o folosi fără bara browserului.</p><button class="primary" type="button">Am înțeles</button>';
   document.body.append(dialog);dialog.showModal();dialog.querySelector('.dialog-close').onclick=()=>dialog.close();dialog.querySelector('.primary').onclick=()=>dialog.close();dialog.addEventListener('close',()=>dialog.remove());
+}
+function showEcosystemInfo(id) {
+  const area=ecosystemAreas.find(item=>item.id===id);
+  if(!area)return;
+  const dialog=document.createElement('dialog');
+  dialog.className='join-dialog ecosystem-dialog';
+  dialog.setAttribute('aria-labelledby','ecosystem-dialog-title');
+  dialog.innerHTML=`<button class="dialog-close" type="button" aria-label="Închide">×</button><span class="eyebrow">Ecosistemul Viziunea</span><h2 id="ecosystem-dialog-title">${area.title}</h2><p>${area.description}</p><button class="primary ecosystem-understood" type="button">Am înțeles</button>`;
+  document.body.append(dialog);
+  dialog.showModal();
+  dialog.querySelector('.dialog-close').addEventListener('click',()=>dialog.close());
+  dialog.querySelector('.ecosystem-understood').addEventListener('click',()=>dialog.close());
+  dialog.addEventListener('click',event=>{if(event.target===dialog)dialog.close();});
+  dialog.addEventListener('close',()=>dialog.remove());
 }
 function showAdminForm() {
   const dialog=document.createElement('dialog');
