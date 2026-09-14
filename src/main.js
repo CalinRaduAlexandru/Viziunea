@@ -38,7 +38,7 @@ function installAction() {
   if(/Android/i.test(navigator.userAgent)) return '<button class="install-link" data-fullscreen>Deschide fără bara browserului</button>';
   return '';
 }
-function progress() { return `<div class="progress" aria-label="Pasul ${step + 1} din 5">${Array.from({ length: 4 }, (_, i) => `<i class="${i <= step - 1 ? 'on' : ''}"></i>`).join('')}</div>`; }
+function progress() { return `<div class="progress" aria-label="Pasul ${step + 1} din 5">${Array.from({ length: 5 }, (_, i) => `<i class="${i <= step ? 'on' : ''}"></i>`).join('')}</div>`; }
 function art(className, text) { return `<div class="art ${className}" aria-hidden="true"><div class="art-glow"></div><div class="art-lines"></div><span>${text}</span><small>OAMENI · IDEI · ÎMPREUNĂ</small></div>`; }
 function roleCard(role) { return `<article class="role-card ${role.color}"><div class="role-icon">${image(role.icon)}</div><h2>${role.title}</h2><p>${role.intro}</p><ul>${role.points.map(p => `<li>${p}</li>`).join('')}</ul>${art(`role-art ${role.color}`, role.art)}<button class="primary role-submit" data-role="${role.id}">${role.action}<span>→</span></button></article>`; }
 
@@ -59,9 +59,9 @@ function homeView() {
   ];
   const content = pages[Math.min(step,4)];
   const coverScreen=step===0;
-  const stepLabel=`<div class="step-label"><b>${step + 1}.</b> ${['COVER','DESPRE NOI','CE FACEM','INIMA PROIECTULUI','ALEGE ROLUL'][Math.min(step,4)]}</div>`;
   const stepNav=`<nav class="step-nav"><button class="round nav-back" data-back aria-label="${step===0?'Înapoi la început':'Pasul anterior'}">←</button>${progress()}${step < 4 ? '<button class="round nav-next" data-next aria-label="Pasul următor">→</button>' : '<span class="nav-spacer" aria-hidden="true"></span>'}</nav>`;
-  return `<main class="onboarding ${coverScreen?'cover-onboarding':''}">${coverScreen?'':stepLabel}${content}${stepNav}</main>`;
+  const contentWithNav=content.replace('</section>',`${stepNav}</section>`);
+  return `<main class="onboarding ${coverScreen?'cover-onboarding':''}">${contentWithNav}</main>`;
 }
 
 function launchView() {
@@ -127,4 +127,16 @@ if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   navigator.serviceWorker.addEventListener('controllerchange',()=>{if(hadController){hadController=false;location.reload();}});
   navigator.serviceWorker.register(new URL('../service-worker.js', import.meta.url),{updateViaCache:'none'}).then(registration=>registration.update()).catch(()=>{});
 }
+let refreshStart=null;
+window.addEventListener('touchstart',event=>{
+  if(event.touches.length!==1){refreshStart=null;return;}
+  const touch=event.touches[0];
+  refreshStart=touch.clientY<=130?{x:touch.clientX,y:touch.clientY}:null;
+},{passive:true});
+window.addEventListener('touchmove',event=>{
+  if(!refreshStart||event.touches.length!==1)return;
+  const touch=event.touches[0];
+  if(touch.clientY-refreshStart.y>100&&Math.abs(touch.clientX-refreshStart.x)<60){refreshStart=null;location.reload();}
+},{passive:true});
+window.addEventListener('touchend',()=>{refreshStart=null;},{passive:true});
 render();
