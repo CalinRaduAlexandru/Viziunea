@@ -15,10 +15,15 @@ const ecosystemAreas = [
   { id:'art', file:'activity-art-marketing.png', title:'Artă și marketing', description:'Concepte vizuale și povești care ajută proiectele creative să ajungă la oamenii potriviți.' },
   { id:'nature', file:'activity-nature-community.png', title:'Natură și comunitate', description:'Activități și contexte în aer liber care apropie oamenii și deschid loc pentru idei noi.' },
 ];
+const explorationChoices = [
+  { id:'creator', label:'Artist / Creator', description:'Am o idee, un proiect sau o practică artistică.', icon:'icon-role-creator.png', color:'sage' },
+  { id:'collaborator', label:'Colaborator / Organizator', description:'Caut o echipă creativă pentru un proiect sau eveniment.', icon:'icon-role-organizer.png', color:'gold' },
+];
 
 const app = document.querySelector('#app');
 let step = -1;
 let chosenRole = roles[0].id;
+let explorationChoice = 'visitor';
 let installPrompt;
 let enteredApp = appInstalled();
 
@@ -57,19 +62,25 @@ function render() {
 }
 function homeView() {
   if(!enteredApp) return launchView();
+  if(step===5) return extendedPresentationView();
   if(step < 0) return entryView();
   const pages = [
     `<section class="cover panel"><div class="cover-art">${art('cover-scene', '◌')}</div>${image('scene-community-fire.png','cover-people')}<div class="cover-shade"></div><div class="cover-copy"><div class="brand brand-light">Viziunea</div><p>Oameni<br> Spații<br> Idei<br> Împreună</p></div></section>`,
     `<section class="panel about"><span class="eyebrow">Viziunea</span><h1>Un loc unde arta prinde viață împreună cu oamenii<span class="spark">✳</span></h1><p class="lead">Viziunea este un hub creativ cu spații, resurse și o comunitate care transformă idei în experiențe reale.</p><div class="art sunset sunset-photo">${image('scene-sunset-group.png','sunset-image')}</div></section>`,
     `<section class="panel what"><div class="ecosystem-grid">${ecosystemAreas.map(area=>`<div class="ecosystem-card">${image(area.file,'ecosystem-art',`Ilustrație: ${area.title}`)}<button class="ecosystem-info" data-ecosystem-info="${area.id}" aria-label="Detalii: ${area.title}" aria-haspopup="dialog">i</button></div>`).join('')}</div></section>`,
     `<section class="panel inside"><span class="eyebrow">Inima proiectului</span><h1>O comunitate de creație care construiește experiențe reale.</h1><div class="heart">${image('icon-heart-community.png','heart-icon')}</div><ul class="checks"><li>Oameni care se susțin</li><li>Spații pentru idei curajoase</li><li>Învățare prin practică</li><li>De la concept la realitate</li><li>Proiecte cu impact cultural și social</li></ul></section>`,
-    `<section class="panel choose"><span class="eyebrow">Cum vrei să continui?</span><h1>Alege rolul care ți se potrivește.</h1><p class="lead">Fiecare drum duce în aceeași direcție: mai multă artă în lume.</p><div class="role-links">${roles.map(r=>`<button class="role-link ${r.color}" data-role="${r.id}">${image(r.icon,'role-link-icon')}<span>${r.short}</span><b>›</b></button>`).join('')}</div></section>`,
+    `<section class="panel choose"><span class="eyebrow">Explorează în ritmul tău</span><h1>Cum vrei să descoperi Viziunea?</h1><p class="lead">Pentru o experiență personalizată te invităm să alegi rolul cu care dorești să explorezi Viziunea.</p><div class="role-links">${explorationChoices.map(choice=>`<button class="role-link ${choice.color}" data-explore-role="${choice.id}">${image(choice.icon,'role-link-icon')}<span><b>${choice.label}</b><small>${choice.description}</small></span><strong>›</strong></button>`).join('')}</div><button class="visitor-link" data-explore-visitor>Continuă ca vizitator (fără rol) <span>→</span></button></section>`,
   ];
   const content = pages[Math.min(step,4)];
   const coverScreen=step===0;
   const stepNav=`<nav class="step-nav"><button class="round nav-back" data-back aria-label="${step===0?'Înapoi la început':'Pasul anterior'}">←</button>${progress()}${step < 4 ? '<button class="round nav-next" data-next aria-label="Pasul următor">→</button>' : '<span class="nav-spacer" aria-hidden="true"></span>'}</nav>`;
   const contentWithNav=content.replace('</section>',`${stepNav}</section>`);
   return `<main class="onboarding ${coverScreen?'cover-onboarding':''}">${contentWithNav}</main>`;
+}
+
+function extendedPresentationView() {
+  const selected=explorationChoices.find(choice=>choice.id===explorationChoice);
+  return `<main class="extended-view"><button class="extended-back" data-presentation-back><span>←</span> Înapoi la roluri</button><section class="extended-card"><div class="extended-hero">${image('scene-creative-space.png','extended-image')}<div class="extended-shade"></div><div class="extended-wordmark">Viziunea</div></div><div class="extended-copy"><span class="eyebrow">${selected?`Interes selectat · ${selected.label}`:'Explorare liberă · fără rol'}</span><h1>Un ecosistem creativ construit împreună.</h1><p class="lead">Viziunea aduce împreună oameni, spații și resurse pentru ca ideile să devină proiecte și experiențe reale.</p><div class="extended-grid"><article><span>⌂</span><div><b>Spații pentru idei</b><small>Locuri de întâlnire, lucru și inspirație.</small></div></article><article><span>✳</span><div><b>Învățare practică</b><small>Ateliere și schimb de experiență.</small></div></article><article><span>◌</span><div><b>Oameni care colaborează</b><small>O comunitate cu perspective diferite.</small></div></article><article><span>↗</span><div><b>Proiecte în realitate</b><small>De la concept la producție și eveniment.</small></div></article></div><p class="extended-footnote">Explorezi fără înscriere. Poți reveni oricând la alegerea rolului.</p></div></section></main>`;
 }
 
 function launchView() {
@@ -97,6 +108,9 @@ function bind() {
   app.querySelector('#auth-form')?.addEventListener('submit',e=>{requestAppFullscreen();e.preventDefault();app.querySelector('.auth-message').textContent='Autentificarea nu este activată încă. Conectează proiectul Supabase pentru acces la conturi.';});
   app.querySelectorAll('[data-next]').forEach(b=>b.addEventListener('click',()=>{requestAppFullscreen();step = Math.min(step + 1, 4); render();}));
   app.querySelector('[data-back]')?.addEventListener('click',()=>{requestAppFullscreen();if(step===0){step=-1;}else{step--;}render();});
+  app.querySelectorAll('[data-explore-role]').forEach(button=>button.addEventListener('click',()=>{explorationChoice=button.dataset.exploreRole;step=5;render();}));
+  app.querySelector('[data-explore-visitor]')?.addEventListener('click',()=>{explorationChoice='visitor';step=5;render();});
+  app.querySelector('[data-presentation-back]')?.addEventListener('click',()=>{step=4;render();});
   app.querySelectorAll('[data-role]').forEach(b=>b.addEventListener('click',()=>{requestAppFullscreen();chosenRole=b.dataset.role;showJoinForm();}));
   app.querySelectorAll('[data-ecosystem-info]').forEach(button=>button.addEventListener('click',()=>showEcosystemInfo(button.dataset.ecosystemInfo)));
   app.querySelector('[data-fullscreen]')?.addEventListener('click',requestAppFullscreen);
