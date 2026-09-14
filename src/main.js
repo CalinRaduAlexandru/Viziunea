@@ -115,5 +115,9 @@ function showJoinForm() {
 
 window.addEventListener('popstate',render);
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;if(route()==='home'&&step<0)render();});
-if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register(new URL('../service-worker.js', import.meta.url)).catch(()=>{});
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  let hadController=Boolean(navigator.serviceWorker.controller);
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(hadController){hadController=false;location.reload();}});
+  navigator.serviceWorker.register(new URL('../service-worker.js', import.meta.url),{updateViaCache:'none'}).then(registration=>registration.update()).catch(()=>{});
+}
 render();
