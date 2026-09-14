@@ -23,6 +23,20 @@ function go(path) { history.pushState({}, '', path); render(); }
 function escapeHTML(value = '') { return String(value).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
 function asset(file) { return new URL(`../assets/${file}`, import.meta.url).href; }
 function image(file, className = '', alt = '') { return `<img class="${className}" src="${asset(file)}" alt="${alt}" decoding="async">`; }
+function requestAppFullscreen() {
+  const root=document.documentElement;
+  if(appInstalled() || document.fullscreenElement || !root.requestFullscreen) return;
+  try { root.requestFullscreen({navigationUI:'hide'}).catch(()=>{}); } catch {}
+}
+function appInstalled() { return navigator.standalone || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches; }
+function isIOS() { return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
+function installAction() {
+  if(appInstalled()) return '';
+  if(installPrompt) return '<button class="install-link" data-install>Instalează aplicația</button>';
+  if(isIOS()) return '<button class="install-link" data-install-help>Adaugă pe ecranul principal</button>';
+  if(/Android/i.test(navigator.userAgent)) return '<button class="install-link" data-fullscreen>Deschide fără bara browserului</button>';
+  return '';
+}
 function progress() { return `<div class="progress" aria-label="Pasul ${step + 1} din 5">${Array.from({ length: 4 }, (_, i) => `<i class="${i <= step - 1 ? 'on' : ''}"></i>`).join('')}</div>`; }
 function art(className, text) { return `<div class="art ${className}" aria-hidden="true"><div class="art-glow"></div><div class="art-lines"></div><span>${text}</span><small>OAMENI · IDEI · ÎMPREUNĂ</small></div>`; }
 function roleCard(role) { return `<article class="role-card ${role.color}"><div class="role-icon">${image(role.icon)}</div><h2>${role.title}</h2><p>${role.intro}</p><ul>${role.points.map(p => `<li>${p}</li>`).join('')}</ul>${art(`role-art ${role.color}`, role.art)}<button class="primary role-submit" data-role="${role.id}">${role.action}<span>→</span></button></article>`; }
@@ -46,7 +60,7 @@ function homeView() {
 }
 
 function entryView() {
-  return `<main class="entry-wrap"><section class="entry-hero"><div class="entry-art">${image('scene-creative-space.png','entry-background')}<div class="entry-shade"></div><div class="entry-copy"><span class="eyebrow">Oameni · Spații · Idei · Împreună</span><h1>Viziunea</h1><p>Un ecosistem creativ construit împreună.</p></div><span class="entry-star">✳</span></div><div class="entry-options"><span class="eyebrow">Bine ai venit</span><h2>Unde vrei să mergem?</h2><button class="entry-choice existing" data-auth><span class="choice-icon">↗</span><span><b>Fac parte din comunitate</b><small>Intră în contul tău Viziunea</small></span><strong>→</strong></button><button class="entry-choice discover" data-discover><span class="choice-icon">✳</span><span><b>Doresc să descopăr Viziunea</b><small>Află ce construim împreună</small></span><strong>→</strong></button><p class="entry-footnote">Un loc unde arta prinde viață împreună cu oamenii.</p></div></section></main>`;
+  return `<main class="entry-wrap"><section class="entry-hero"><div class="entry-art">${image('scene-creative-space.png','entry-background')}<div class="entry-shade"></div><div class="entry-copy"><span class="eyebrow">Oameni · Spații · Idei · Împreună</span><h1>Viziunea</h1><p>Un ecosistem creativ construit împreună.</p></div><span class="entry-star">✳</span></div><div class="entry-options"><span class="eyebrow">Bine ai venit</span><h2>Unde vrei să mergem?</h2><button class="entry-choice existing" data-auth><span class="choice-icon">↗</span><span><b>Fac parte din comunitate</b><small>Intră în contul tău Viziunea</small></span><strong>→</strong></button><button class="entry-choice discover" data-discover><span class="choice-icon">✳</span><span><b>Doresc să descopăr Viziunea</b><small>Află ce construim împreună</small></span><strong>→</strong></button>${installAction()}<p class="entry-footnote">Un loc unde arta prinde viață împreună cu oamenii.</p></div></section></main>`;
 }
 
 function authView() {
@@ -59,16 +73,25 @@ function adminView() {
 }
 function memberRows(list) { return list.map(m=>`<tr><td><div class="person"><span>${escapeHTML(m.name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase())}</span><b>${escapeHTML(m.name)}</b></div></td><td>${escapeHTML(roles.find(r=>r.id===m.role)?.short || m.role)}</td><td>${escapeHTML(m.email)}</td><td>${escapeHTML(m.city || '—')}</td><td><i class="status-dot"></i> ${escapeHTML(m.status || 'Activ')}</td></tr>`).join('') || `<tr><td colspan="5" class="empty">Nu există membri încă.</td></tr>`; }
 function bind() {
-  app.querySelectorAll('[data-entry-home]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();step=-1;go('./');}));
-  app.querySelector('[data-auth]')?.addEventListener('click',()=>go('./auth'));
-  app.querySelectorAll('[data-discover]').forEach(b=>b.addEventListener('click',()=>{step=0;go('./');}));
-  app.querySelector('#auth-form')?.addEventListener('submit',e=>{e.preventDefault();app.querySelector('.auth-message').textContent='Autentificarea nu este activată încă. Conectează proiectul Supabase pentru acces la conturi.';});
-  app.querySelectorAll('[data-next]').forEach(b=>b.addEventListener('click',()=>{ step = Math.min(step + 1, 4); render(); }));
-  app.querySelectorAll('[data-role]').forEach(b=>b.addEventListener('click',()=>{ chosenRole=b.dataset.role; showJoinForm(); }));
-  app.querySelector('[data-admin]')?.addEventListener('click',()=>go('./admin'));
-  app.querySelector('[data-home]')?.addEventListener('click',()=>{step=-1;go('./');});
-  app.querySelector('[data-add]')?.addEventListener('click',showAdminForm);
+  app.querySelectorAll('[data-entry-home]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();requestAppFullscreen();step=-1;go('./');}));
+  app.querySelector('[data-auth]')?.addEventListener('click',()=>{requestAppFullscreen();go('./auth');});
+  app.querySelectorAll('[data-discover]').forEach(b=>b.addEventListener('click',()=>{requestAppFullscreen();step=0;go('./');}));
+  app.querySelector('#auth-form')?.addEventListener('submit',e=>{requestAppFullscreen();e.preventDefault();app.querySelector('.auth-message').textContent='Autentificarea nu este activată încă. Conectează proiectul Supabase pentru acces la conturi.';});
+  app.querySelectorAll('[data-next]').forEach(b=>b.addEventListener('click',()=>{requestAppFullscreen();step = Math.min(step + 1, 4); render();}));
+  app.querySelectorAll('[data-role]').forEach(b=>b.addEventListener('click',()=>{requestAppFullscreen();chosenRole=b.dataset.role;showJoinForm();}));
+  app.querySelector('[data-fullscreen]')?.addEventListener('click',requestAppFullscreen);
+  app.querySelector('[data-install]')?.addEventListener('click',async()=>{const prompt=installPrompt;if(!prompt)return;installPrompt=null;await prompt.prompt();await prompt.userChoice;render();});
+  app.querySelector('[data-install-help]')?.addEventListener('click',showIOSInstallHelp);
+  app.querySelector('[data-admin]')?.addEventListener('click',()=>{requestAppFullscreen();go('./admin');});
+  app.querySelector('[data-home]')?.addEventListener('click',()=>{requestAppFullscreen();step=-1;go('./');});
+  app.querySelector('[data-add]')?.addEventListener('click',()=>{requestAppFullscreen();showAdminForm();});
   app.querySelector('#filter')?.addEventListener('input',e=>{ const q=e.target.value.toLowerCase(); app.querySelector('#member-rows').innerHTML=memberRows(getMembers().filter(m=>`${m.name} ${m.email} ${m.city} ${m.role}`.toLowerCase().includes(q))); });
+}
+function showIOSInstallHelp() {
+  const dialog=document.createElement('dialog');
+  dialog.className='join-dialog install-dialog';
+  dialog.innerHTML='<button class="dialog-close" aria-label="Închide">×</button><span class="eyebrow">Instalează aplicația</span><h2>Viziunea, pe ecranul principal.</h2><p>În Safari, apasă butonul Partajare, apoi alege „Adaugă la ecranul principal”. Deschide Viziunea din pictograma nouă pentru a o folosi fără bara browserului.</p><button class="primary" type="button">Am înțeles</button>';
+  document.body.append(dialog);dialog.showModal();dialog.querySelector('.dialog-close').onclick=()=>dialog.close();dialog.querySelector('.primary').onclick=()=>dialog.close();dialog.addEventListener('close',()=>dialog.remove());
 }
 function showAdminForm() {
   const dialog=document.createElement('dialog');
@@ -87,6 +110,6 @@ function showJoinForm() {
 }
 
 window.addEventListener('popstate',render);
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;});
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;if(route()==='home'&&step<0)render();});
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register(new URL('../service-worker.js', import.meta.url)).catch(()=>{});
 render();
