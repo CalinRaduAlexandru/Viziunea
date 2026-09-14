@@ -4,7 +4,7 @@ Onboarding pentru comunitatea Viziunea, construit cu vanilla JavaScript și CSS.
 
 ## Pornire locală
 
-Servește directorul cu orice server static, de exemplu `python3 -m http.server 8000`, apoi deschide `http://localhost:8000`. `/auth` arată formularul demonstrativ, iar `/admin` panelul demo. Autentificarea nu este conectată încă; înainte de date reale, protejează rutele de admin cu Supabase Auth și roluri de staff.
+Servește directorul cu orice server static, de exemplu `python3 -m http.server 8000`, apoi deschide `http://localhost:8000`. `/auth` arată formularul demonstrativ, iar `/admin` panelul demo. Autentificarea nu este conectată încă; înainte de date reale, protejează rutele de admin cu Supabase Auth și roluri de staff. Interfața este fixată la înălțimea disponibilă și nu permite derularea; pe ecranele joase ascunde informațiile secundare. Pentru a lansa fără barele browserului, instalează PWA-ul pe ecranul principal al telefonului și deschide aplicația de acolo; manifestul folosește modul fullscreen.
 
 ## Model de date
 

@@ -4,7 +4,8 @@
   "description": "Un ecosistem creativ construit împreună.",
   "start_url": "./",
   "scope": "./",
-  "display": "standalone",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
   "background_color": "#f7f4ed",
   "theme_color": "#f7f4ed",
   "icons": [{ "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]

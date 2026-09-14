@@ -39,12 +39,12 @@ function homeView() {
     `<section class="panel inside"><span class="eyebrow">Inima proiectului</span><h1>O comunitate de creație care construiește experiențe reale.</h1><div class="heart">♡</div><ul class="checks"><li>Oameni care se susțin</li><li>Spații pentru idei curajoase</li><li>Învățare prin practică</li><li>De la concept la realitate</li><li>Proiecte cu impact cultural și social</li></ul><button class="round next" data-next aria-label="Alege rolul">→</button></section>`,
     `<section class="panel choose"><span class="eyebrow">Cum vrei să continui?</span><h1>Alege rolul care ți se potrivește.</h1><p class="lead">Fiecare drum duce în aceeași direcție: mai multă artă în lume.</p><div class="role-links">${roles.map(r=>`<button class="role-link ${r.color}" data-role="${r.id}"><span>${r.icon}</span>${r.short}<b>›</b></button>`).join('')}</div></section>`,
   ];
-  const content = step === 5 ? `<section class="panel roles-panel"><div class="roles-heading"><button class="text-button" data-prev>← Înapoi</button><span class="eyebrow">Alege drumul tău</span><h1>Locul tău e aici.</h1></div><div class="role-cards">${roles.map(roleCard).join('')}</div></section>` : pages[step];
-  return `<header class="topbar"><a href="./" class="brand">Viziunea<span>✳</span></a><button class="text-button admin-link" data-admin>Admin ↗</button></header><main class="onboarding"><div class="step-label"><b>${step + 1}.</b> ${['COVER','DESPRE NOI','CE FACEM','INIMA PROIECTULUI','ALEGE ROLUL'][Math.min(step,4)]}</div>${content}<nav class="step-nav">${progress()}<button class="round nav-next" data-next aria-label="Pasul următor">→</button></nav></main><footer class="site-footer">© 2026 Viziunea <span>Făcută împreună, cu sens.</span></footer>`;
+  const content = pages[Math.min(step,4)];
+  return `<header class="topbar"><a href="./" class="brand" data-entry-home>Viziunea<span>✳</span></a><button class="text-button admin-link" data-admin>Admin ↗</button></header><main class="onboarding"><div class="step-label"><b>${step + 1}.</b> ${['COVER','DESPRE NOI','CE FACEM','INIMA PROIECTULUI','ALEGE ROLUL'][Math.min(step,4)]}</div>${content}<nav class="step-nav">${progress()}${step < 4 ? '<button class="round nav-next" data-next aria-label="Pasul următor">→</button>' : ''}</nav></main><footer class="site-footer">© 2026 Viziunea <span>Făcută împreună, cu sens.</span></footer>`;
 }
 
 function entryView() {
-  return `<header class="topbar"><a href="./" class="brand" data-entry-home>Viziunea<span>✳</span></a><button class="text-button admin-link" data-admin>Admin ↗</button></header><main class="entry-wrap"><section class="entry-hero"><div class="entry-art">${art('cover-scene','◌')}<div class="entry-shade"></div><div class="entry-copy"><span class="eyebrow">Oameni · Spații · Idei · Împreună</span><h1>Viziunea</h1><p>Un ecosistem creativ construit împreună.</p></div><span class="entry-star">✳</span></div><div class="entry-options"><span class="eyebrow">Bine ai venit</span><h2>Unde vrei să mergem?</h2><button class="entry-choice existing" data-auth><span class="choice-icon">↗</span><span><b>Fac parte din comunitate</b><small>Intră în contul tău Viziunea</small></span><strong>→</strong></button><button class="entry-choice discover" data-discover><span class="choice-icon">✳</span><span><b>Doresc să descopăr Viziunea</b><small>Află ce construim împreună</small></span><strong>→</strong></button><p class="entry-footnote">Un loc unde arta prinde viață împreună cu oamenii.</p></div></section></main><footer class="site-footer">© 2026 Viziunea <span>Făcută împreună, cu sens.</span></footer>`;
+  return `<main class="entry-wrap"><section class="entry-hero"><div class="entry-art">${art('cover-scene','◌')}<div class="entry-shade"></div><div class="entry-copy"><span class="eyebrow">Oameni · Spații · Idei · Împreună</span><h1>Viziunea</h1><p>Un ecosistem creativ construit împreună.</p></div><span class="entry-star">✳</span></div><div class="entry-options"><span class="eyebrow">Bine ai venit</span><h2>Unde vrei să mergem?</h2><button class="entry-choice existing" data-auth><span class="choice-icon">↗</span><span><b>Fac parte din comunitate</b><small>Intră în contul tău Viziunea</small></span><strong>→</strong></button><button class="entry-choice discover" data-discover><span class="choice-icon">✳</span><span><b>Doresc să descopăr Viziunea</b><small>Află ce construim împreună</small></span><strong>→</strong></button><p class="entry-footnote">Un loc unde arta prinde viață împreună cu oamenii.</p></div></section></main>`;
 }
 
 function authView() {
@@ -59,10 +59,9 @@ function memberRows(list) { return list.map(m=>`<tr><td><div class="person"><spa
 function bind() {
   app.querySelectorAll('[data-entry-home]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();step=-1;go('./');}));
   app.querySelector('[data-auth]')?.addEventListener('click',()=>go('./auth'));
-  app.querySelectorAll('[data-discover]').forEach(b=>b.addEventListener('click',()=>{step=0;go('./');window.scrollTo({top:0,behavior:'smooth'});}));
+  app.querySelectorAll('[data-discover]').forEach(b=>b.addEventListener('click',()=>{step=0;go('./');}));
   app.querySelector('#auth-form')?.addEventListener('submit',e=>{e.preventDefault();app.querySelector('.auth-message').textContent='Autentificarea nu este activată încă. Conectează proiectul Supabase pentru acces la conturi.';});
-  app.querySelectorAll('[data-next]').forEach(b=>b.addEventListener('click',()=>{ step = Math.min(step + 1, 5); render(); window.scrollTo({top:0,behavior:'smooth'}); }));
-  app.querySelectorAll('[data-prev]').forEach(b=>b.addEventListener('click',()=>{ step=4; render(); }));
+  app.querySelectorAll('[data-next]').forEach(b=>b.addEventListener('click',()=>{ step = Math.min(step + 1, 4); render(); }));
   app.querySelectorAll('[data-role]').forEach(b=>b.addEventListener('click',()=>{ chosenRole=b.dataset.role; showJoinForm(); }));
   app.querySelector('[data-admin]')?.addEventListener('click',()=>go('./admin'));
   app.querySelector('[data-home]')?.addEventListener('click',()=>{step=-1;go('./');});
@@ -87,5 +86,5 @@ function showJoinForm() {
 
 window.addEventListener('popstate',render);
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;});
-if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register(new URL('../service-worker.js', import.meta.url)).catch(()=>{});
 render();
