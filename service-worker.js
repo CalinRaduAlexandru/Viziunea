@@ -1,4 +1,4 @@
-const CACHE='viziunea-static-v17';
+const CACHE='viziunea-static-v18';
 const SHELL=['./','./index.html','./admin/','./auth/','./styles.css','./entry.css','./viewport.css','./assets-layout.css','./manifest.webmanifest','./src/main.js','./src/config.js','./src/views/orientation.js','./src/services/members.js','./src/services/supabase.js','./src/services/auth.js','./src/services/demo-data.js','./src/services/directory.js','./src/services/needs.js','./src/services/suggestions.js','./src/services/notifications.js','./assets/icon.svg'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(async cache=>{
   const files=await Promise.all(SHELL.map(async url=>{
