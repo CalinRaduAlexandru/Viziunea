@@ -22,6 +22,7 @@
 .contact-actions+small{display:none}
 .members-table,.members-table-scroll{overflow:visible}
 .members-table td:first-child{overflow:visible}.members-table td:first-child .member-person{overflow:visible}
+.members-table tbody{position:relative;z-index:10}.member-note{z-index:30}
 .edit-member{width:32px;height:32px;padding:0;display:grid;place-items:center;background:#fff;border:1px solid #cfded0;border-radius:7px;font-size:0;line-height:1}.edit-member::before{content:'✎';font-size:17px;color:#28547a}.edit-member:hover{background:#f0f8ef}
 .members-table .edit-member{width:32px;height:32px;padding:0;font-size:0;display:grid;place-items:center;background:#fff}.members-table .edit-member::before{content:'✎';font-size:17px}
 .member-filters{display:grid;grid-template-columns:290px repeat(4,170px) 90px 1fr;align-items:end;flex-wrap:nowrap}.member-filters .filter-count{justify-self:end}.member-filters .filter-reset{justify-self:start}
