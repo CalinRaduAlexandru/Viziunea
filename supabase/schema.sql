@@ -28,11 +28,13 @@ create table if not exists public.members (
   city text,
   role text not null check (role in ('member','creator','student','collaborator','organizer')),
   status text not null default 'active' check (status in ('active','inactive')),
+  admin_note text not null default '',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint members_email_lowercase check (email = lower(trim(email)))
 );
 create unique index if not exists members_email_unique on public.members (email);
+alter table public.members add column if not exists admin_note text not null default '';
 create index if not exists members_role_created_at on public.members (role, created_at desc);
 
 create table if not exists public.directory_items (
@@ -257,6 +259,7 @@ grant insert (need_id,suggestion_type,name,description,contact_url,note) on publ
 grant select, update on public.notifications to authenticated;
 grant insert on public.notifications to authenticated;
 grant select on public.members to authenticated;
+grant update (status, admin_note) on public.members to authenticated;
 grant insert on public.members to anon, authenticated;
 grant update, delete on public.members to authenticated;
 grant select, insert, update on public.profiles to authenticated;
