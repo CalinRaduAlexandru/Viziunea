@@ -23,6 +23,7 @@
 .members-table,.members-table-scroll{overflow:visible}
 .members-table td:first-child{overflow:visible}.members-table td:first-child .member-person{overflow:visible}
 .interest-list{display:block;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.interest-list span{display:inline-block;margin-right:4px;vertical-align:middle;white-space:nowrap}
+.city-short{display:inline-block;max-width:48px;cursor:help}.members-table th:nth-child(3){width:7%}.members-table th:nth-child(7){width:20%}.members-table th:nth-child(8){width:6%}.members-table th:nth-child(9){width:6%}
 .members-table tbody{position:relative;z-index:10}.member-note{z-index:30}
 .edit-member{width:32px;height:32px;padding:0;display:grid;place-items:center;background:#fff;border:1px solid #cfded0;border-radius:7px;font-size:0;line-height:1}.edit-member::before{content:'✎';font-size:17px;color:#28547a}.edit-member:hover{background:#f0f8ef}
 .members-table .edit-member{width:32px;height:32px;padding:0;font-size:0;display:grid;place-items:center;background:#fff}.members-table .edit-member::before{content:'✎';font-size:17px}
