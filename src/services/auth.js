@@ -6,6 +6,7 @@ const supabase = await createClient();
 export function isSupabaseConfigured() { return Boolean(supabase); }
 
 export async function getCurrentUser() {
+  try { const demoUser = JSON.parse(localStorage.getItem(DEMO_USER_KEY) || 'null'); if (demoUser) return demoUser; } catch {}
   if (!supabase) {
     try { return JSON.parse(localStorage.getItem(DEMO_USER_KEY) || 'null'); }
     catch { return null; }
@@ -17,6 +18,11 @@ export async function getCurrentUser() {
 
 export async function signInWithEmail(email, displayName = '') {
   const normalized = email.trim().toLowerCase();
+  if (normalized.endsWith('@demo.viziunea.ro')) {
+    const user = { id:`demo:${normalized}`, email:normalized, user_metadata:{ full_name:displayName.trim() } };
+    localStorage.setItem(DEMO_USER_KEY, JSON.stringify(user));
+    return { mode:'demo', user };
+  }
   if (!supabase) {
     const user = { id:`demo:${normalized}`, email:normalized, user_metadata:{ full_name:displayName.trim() } };
     localStorage.setItem(DEMO_USER_KEY, JSON.stringify(user));
@@ -29,7 +35,8 @@ export async function signInWithEmail(email, displayName = '') {
 }
 
 export async function signOut() {
-  if (!supabase) { localStorage.removeItem(DEMO_USER_KEY); return; }
+  localStorage.removeItem(DEMO_USER_KEY);
+  if (!supabase) return;
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
 }
