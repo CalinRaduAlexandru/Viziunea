@@ -45,6 +45,7 @@ export async function listMembers({ page = 1, pageSize = 25, ...filters } = {}) 
   if (filters.city) query = query.eq('city', filters.city);
   if (filters.status) query = query.eq('status', filters.status === 'Activ' ? 'active' : filters.status === 'În așteptare' ? 'pending' : 'rejected');
   if (filters.role) query = query.contains('roles', [filters.role]);
+  if (filters.interest) query = query.contains('interests', [filters.interest]);
   const from = Math.max(0, (page - 1) * pageSize);
   const { data, count, error } = await query.order('created_at', { ascending: false }).range(from, from + pageSize - 1);
   if (error) throw error;
