@@ -17,7 +17,7 @@ export function createPublicViews({ navbar, footer, esc, path, profile, feed, de
     return `${navbar()}<main class="page explore-page"><span class="page-kicker">Page shell</span><h1>Explorează</h1><p class="page-intro">Ce există în ecosistem</p><div class="explore-pills" role="tablist">${exploreCategories.map(([id, label]) => `<a class="explore-pill ${id === active ? 'selected' : ''}" href="/exploreaza#${id}" role="tab" aria-selected="${id === active}">${label}</a>`).join('')}</div><section class="explore-filter-bar"><label>Locație<select class="explore-filter" data-filter="location">${locationOptions}</select></label><button class="filter-reset" data-explore-reset type="button">Resetează</button><span class="filter-count" data-explore-count>${results.length} rezultate</span><label class="explore-name-filter">Opțional · caută după nume<input class="explore-search" type="search" placeholder="Nume sau titlu"></label></section><section class="demo-results"><span class="page-kicker">Demo results · date fictive</span><h2>${esc(exploreCategories.find(([id]) => id === active)[1])}</h2><div class="result-grid">${results.map((item, index) => `<article class="result-card" data-result data-location="${locations[index % locations.length]}"><span>0${index + 1}</span><strong>${esc(item.title)}</strong><b>${esc(item.meta)}</b><small>${esc(item.desc)}</small><button class="person-more" data-explore-detail="${active}" data-detail-index="${index}" type="button">Vezi mai multe <span>→</span></button></article>`).join('')}</div><p class="empty-explore" hidden>Nu există rezultate pentru combinația aleasă.</p></section></main>${footer()}`;
   };
 
-  const profile = () => {
+  const profileView = () => {
     const roles = ['Creator', 'Trainer', 'Participant', 'Voluntar', 'Partner', 'Gazdă de spațiu'];
     const interests = ['Artă', 'Educație', 'Experiențe', 'Turism', 'Evenimente', 'Proiecte', 'Spații'];
     const cities = ['București', 'Cluj-Napoca', 'Iași', 'Brașov', 'Sibiu'];
@@ -33,5 +33,5 @@ export function createPublicViews({ navbar, footer, esc, path, profile, feed, de
 
   const auth = () => `${navbar()}<main class="auth-page"><section class="auth-card"><a class="site-logo" href="/admin">Viziunea<span>✳</span></a><span class="page-kicker">Comunitatea Viziunea · Demo</span><h1>Intră în cont</h1><p>Continuă cu profilul demo Zametheea pentru a vedea zona personală.</p><form id="auth-form"><label>Nume<input name="display_name" autocomplete="name" value="Zametheea"></label><label>Email<input name="email" type="email" autocomplete="email" required value="zametheea@demo.viziunea.ro"></label><button class="account-cta" type="submit">Continuă <span>→</span></button></form><p class="auth-message"></p></section></main>`;
 
-  return { shell, explore, profile, feed: feedView, auth };
+  return { shell, explore, profile: profileView, feed: feedView, auth };
 }
