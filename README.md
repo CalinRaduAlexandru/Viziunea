@@ -21,8 +21,9 @@ Servește repository-ul cu un server static, de exemplu `python3 -m http.server 
 - `src/data/demo-content.js` conține exclusiv seed-urile de demo; nu este sursa datelor de producție.
 - `src/services/app-state.js` este sursa unică pentru profil, preferințele Feed și sincronizarea locală/Supabase.
 - `src/services/member-repository.js` definește contractul de acces la membri: căutare, filtre, paginare și actualizare; în producție query-ul este server-side, iar demo-ul folosește fallback local.
+- `src/services/content-repository.js` definește contractul comun pentru postări, proiecte, spații și evenimente; fiecare listă acceptă paginare și filtre și folosește demo fallback doar când Supabase nu este configurat.
 - `src/services/auth.js`, `directory.js`, `needs.js`, `suggestions.js`, `notifications.js` izolează autentificarea și accesul la date; serviciile folosesc Supabase configurat sau fallback-ul demo.
-- `supabase/schema.sql` este sursa modelului persistent. Rolurile și interesele sunt extensibile prin `profile_roles` și `profile_interests`, preferințele prin `feed_preferences`, iar conținutul comunității prin `community_posts`.
+- `supabase/schema.sql` este sursa modelului persistent. Rolurile și interesele sunt extensibile prin `profile_roles` și `profile_interests`, preferințele prin `feed_preferences`, iar conținutul comunității prin `community_posts` (contractul de citire `posts`), `projects`, `spaces` și `events`.
 - Orice tabel listat pentru utilizatori trebuie să folosească `page`, `pageSize`, filtre în query și `count`, nu să descarce toată baza în browser.
 - `/` prezintă Viziunea și onboarding-ul; `/auth` autentifică; `/admin` oferă taburile Membri, Nevoi, Sugestii și Director.
 
@@ -34,7 +35,7 @@ MVP-ul nu folosește hărți, geocoding sau coordonate lat/lng. Apropierea este 
 
 ## Limite curente și reguli de scalare
 
-Matching-ul este determinist și local, fără AI/ML. Notificările sunt doar in-app; nu există email tranzacțional. Datele demo trăiesc în browserul curent și nu sincronizează între utilizatori. Pentru date persistente și fluxuri comunitare reale trebuie configurat Supabase, Auth și primul staff user.
+Matching-ul este determinist și local, fără AI/ML. Notificările sunt doar in-app; nu există email tranzacțional. Datele demo trăiesc în browserul curent și nu sincronizează între utilizatori. Pentru date persistente și fluxuri comunitare reale trebuie rulat `supabase/schema.sql`, configurat Supabase Auth și creat primul staff user.
 
 Fundația pentru creștere este acum separată de fallback-ul demo: Supabase păstrează datele persistente, repository-urile sunt locul unic pentru query-uri, iar RLS controlează accesul. Pentru lansarea publică trebuie finalizate migrarea tuturor ecranelor către repository-uri, paginarea UI în `/admin`, validarea reală a moderatorului și testele end-to-end pentru politici RLS. Nu se adaugă câmpuri arbitrare în componente; câmpurile persistente se introduc prin migrare SQL și servicii tipizate.
 

@@ -301,6 +301,58 @@ do $$ begin
 end $$;
 create index if not exists profiles_moderation_city on public.profiles (moderation_status, country, city);
 
+create table if not exists public.roles (
+  id uuid primary key default gen_random_uuid(),
+  slug text not null unique,
+  label text not null unique,
+  description text not null default '',
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+create table if not exists public.interests (
+  id uuid primary key default gen_random_uuid(),
+  slug text not null unique,
+  label text not null unique,
+  description text not null default '',
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+insert into public.roles (slug,label) values
+  ('creator','Creator'),('trainer','Trainer'),('participant','Participant'),('volunteer','Voluntar'),('partner','Partner'),('space-host','Gazdă de spațiu')
+on conflict (slug) do nothing;
+insert into public.interests (slug,label) values
+  ('art','Artă'),('education','Educație'),('experiences','Experiențe'),('tourism','Turism'),('events','Evenimente'),('projects','Proiecte'),('spaces','Spații')
+on conflict (slug) do nothing;
+
+create table if not exists public.projects (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references public.profiles(id) on delete cascade,
+  title text not null check (length(trim(title)) between 2 and 180),
+  description text not null default '',
+  city text, country text not null default 'România',
+  status text not null default 'draft' check (status in ('draft','pending','published','rejected','archived')),
+  created_at timestamptz not null default now(), updated_at timestamptz not null default now()
+);
+create table if not exists public.spaces (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references public.profiles(id) on delete cascade,
+  title text not null check (length(trim(title)) between 2 and 180),
+  description text not null default '', city text, country text not null default 'România',
+  status text not null default 'draft' check (status in ('draft','pending','published','rejected','archived')),
+  created_at timestamptz not null default now(), updated_at timestamptz not null default now()
+);
+create table if not exists public.events (
+  id uuid primary key default gen_random_uuid(),
+  organizer_id uuid not null references public.profiles(id) on delete cascade,
+  title text not null check (length(trim(title)) between 2 and 180),
+  description text not null default '', city text, starts_at timestamptz, ends_at timestamptz,
+  status text not null default 'draft' check (status in ('draft','pending','published','rejected','archived')),
+  created_at timestamptz not null default now(), updated_at timestamptz not null default now()
+);
+create index if not exists projects_public_feed on public.projects (status, city, created_at desc);
+create index if not exists spaces_public_feed on public.spaces (status, city, created_at desc);
+create index if not exists events_public_feed on public.events (status, city, starts_at desc);
+
 create table if not exists public.profile_roles (
   profile_id uuid not null references public.profiles(id) on delete cascade,
   role text not null check (length(trim(role)) between 2 and 80),
@@ -336,6 +388,12 @@ create table if not exists public.community_posts (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- Canonical posts table is community_posts; this stable public read contract avoids duplicated post data.
+create or replace view public.posts as
+select id, author_id, title, body, post_type, city, interest, status, created_at, updated_at
+from public.community_posts
+where status = 'published';
 create index if not exists community_posts_feed on public.community_posts (status, city, interest, created_at desc);
 create index if not exists community_posts_author on public.community_posts (author_id, created_at desc);
 
@@ -347,6 +405,11 @@ alter table public.profile_roles enable row level security;
 alter table public.profile_interests enable row level security;
 alter table public.feed_preferences enable row level security;
 alter table public.community_posts enable row level security;
+alter table public.roles enable row level security;
+alter table public.interests enable row level security;
+alter table public.projects enable row level security;
+alter table public.spaces enable row level security;
+alter table public.events enable row level security;
 
 drop policy if exists "profile roles owner or staff" on public.profile_roles;
 create policy "profile roles owner or staff" on public.profile_roles for all to authenticated using (profile_id = auth.uid() or public.is_staff()) with check (profile_id = auth.uid() or public.is_staff());
@@ -366,6 +429,44 @@ create policy "staff moderate posts" on public.community_posts for delete to aut
 grant select, insert, update, delete on public.profile_roles, public.profile_interests, public.feed_preferences to authenticated;
 grant select on public.community_posts to anon, authenticated;
 grant insert, update, delete on public.community_posts to authenticated;
+grant select on public.posts to anon, authenticated;
+grant select on public.roles, public.interests to anon, authenticated;
+grant select on public.projects, public.spaces, public.events to anon, authenticated;
+grant insert, update, delete on public.projects, public.spaces, public.events to authenticated;
+
+drop policy if exists "active roles public read" on public.roles;
+create policy "active roles public read" on public.roles for select to anon, authenticated using (active or public.is_staff());
+drop policy if exists "staff manage roles" on public.roles;
+create policy "staff manage roles" on public.roles for all to authenticated using (public.is_staff()) with check (public.is_staff());
+drop policy if exists "active interests public read" on public.interests;
+create policy "active interests public read" on public.interests for select to anon, authenticated using (active or public.is_staff());
+drop policy if exists "staff manage interests" on public.interests;
+create policy "staff manage interests" on public.interests for all to authenticated using (public.is_staff()) with check (public.is_staff());
+
+drop policy if exists "published projects public read" on public.projects;
+create policy "published projects public read" on public.projects for select to anon, authenticated using (status = 'published' or owner_id = auth.uid() or public.is_staff());
+drop policy if exists "project owner write" on public.projects;
+create policy "project owner write" on public.projects for insert to authenticated with check (owner_id = auth.uid() and status in ('draft','pending') and public.is_approved_member());
+create policy "project owner update" on public.projects for update to authenticated using (owner_id = auth.uid() or public.is_staff()) with check ((owner_id = auth.uid() and status in ('draft','pending')) or public.is_staff());
+drop policy if exists "published spaces public read" on public.spaces;
+create policy "published spaces public read" on public.spaces for select to anon, authenticated using (status = 'published' or owner_id = auth.uid() or public.is_staff());
+drop policy if exists "space owner write" on public.spaces;
+create policy "space owner write" on public.spaces for all to authenticated using (owner_id = auth.uid() or public.is_staff()) with check ((owner_id = auth.uid() and status in ('draft','pending')) or public.is_staff());
+drop policy if exists "published events public read" on public.events;
+create policy "published events public read" on public.events for select to anon, authenticated using (status = 'published' or organizer_id = auth.uid() or public.is_staff());
+drop policy if exists "event owner write" on public.events;
+create policy "event owner write" on public.events for all to authenticated using (organizer_id = auth.uid() or public.is_staff()) with check ((organizer_id = auth.uid() and status in ('draft','pending')) or public.is_staff());
+
+-- Public data deliberately excludes email, phone, notes and moderation metadata.
+create or replace view public.approved_profiles as
+select id, display_name, city, county, country, roles, interests, created_at
+from public.profiles where moderation_status = 'approved';
+create or replace view public.member_profiles as
+select id, display_name, city, county, country, roles, interests, created_at
+from public.profiles
+where moderation_status = 'approved' and (id = auth.uid() or public.is_approved_member() or public.is_staff());
+grant select on public.approved_profiles to anon, authenticated;
+grant select on public.member_profiles to authenticated;
 
 -- A member may edit identity/preferences, never their own moderation decision.
 revoke insert, update on public.profiles from authenticated;
@@ -388,3 +489,9 @@ drop trigger if exists feed_preferences_updated_at on public.feed_preferences;
 create trigger feed_preferences_updated_at before update on public.feed_preferences for each row execute function public.set_updated_at();
 drop trigger if exists community_posts_updated_at on public.community_posts;
 create trigger community_posts_updated_at before update on public.community_posts for each row execute function public.set_updated_at();
+drop trigger if exists projects_updated_at on public.projects;
+create trigger projects_updated_at before update on public.projects for each row execute function public.set_updated_at();
+drop trigger if exists spaces_updated_at on public.spaces;
+create trigger spaces_updated_at before update on public.spaces for each row execute function public.set_updated_at();
+drop trigger if exists events_updated_at on public.events;
+create trigger events_updated_at before update on public.events for each row execute function public.set_updated_at();

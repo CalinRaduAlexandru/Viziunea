@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/Viziunea/styles.css" />
+  <title>Viziunea</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    const base = '/Viziunea';
+    const requested = location.pathname.startsWith(base) ? location.pathname.slice(base.length) || '/' : '/';
+    history.replaceState({}, '', `${base}/${requested.replace(/^\//, '')}${location.search}${location.hash}`.replace(`${base}//`, `${base}/`));
+  </script>
+  <script type="module" src="/Viziunea/src/main.js"></script>
+</body>
+</html>
