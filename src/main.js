@@ -4,7 +4,7 @@ import { profileState as demoProfile, feedState as demoFeed, saveProfile as save
 import { DEMO_RESULTS, FEED_POSTS, ADMIN_MEMBERS } from './data/demo-content.js';
 import { createPublicViews } from './views/public-pages.js';
 import { createAdminView } from './views/admin-page.js';
-import { sendMessage, listMessages, listNotifications, notifyMention } from './services/messaging.js';
+import { sendMessage, listMessages, listNotifications, notifyMention, getDemoUnreadCounts } from './services/messaging.js';
 import { listComments, addComment } from './services/feed-comments.js';
 import { createPost, listContent, listPosts, listProjects, listSpaces, listEvents, listModerationPosts, updatePostStatus } from './services/content-repository.js';
 
@@ -17,7 +17,7 @@ const DIRECTIONS = [['/directii/servicii-creative-suport','Servicii Creative și
 const path = () => { const current = location.pathname.startsWith(BASE_PATH) ? location.pathname.slice(BASE_PATH.length) : location.pathname; return current.replace(/\/+$/, '') || '/'; };
 const go = url => { history.pushState({},'',`${BASE_PATH}${url}`); mobileOpen=false; render(); };
 const esc = v => String(v ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const link = (url,label,extra='') => `<a class="nav-link ${path()===url?'active':''} ${extra}" href="${BASE_PATH}${url}">${label}</a>`;
+const link = (url,label,extra='') => {const counts=currentUser?getDemoUnreadCounts(currentUser):{notifications:0,messages:0};const count=url==='/mesaje'?counts.messages:url==='/notificari'?counts.notifications:0;return `<a class="nav-link ${path()===url?'active':''} ${extra}" href="${BASE_PATH}${url}">${label}${count?`<span class="nav-unread-badge">${count>9?'9+':count}</span>`:''}</a>`;};
 const directionsMenu = () => DIRECTIONS.map(([u,l])=>link(u,l)).join('');
 const exploreMenu = () => `${link('/despre','Despre')}${link('/directii','Direcții')}${link('/resurse','Resurse')}`;
 const exploreCategories = [['oameni','Oameni'],['proiecte','Proiecte'],['experiente','Experiențe'],['evenimente','Evenimente'],['oportunitati','Oportunități'],['spatii','Spații']];

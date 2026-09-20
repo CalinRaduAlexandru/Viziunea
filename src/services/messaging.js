@@ -8,6 +8,13 @@ function read(key) { try { return JSON.parse(localStorage.getItem(key) || '[]');
 function write(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
 function idFor(user) { return user?.email || user?.id || ''; }
 
+export function getDemoUnreadCounts(user) {
+  const id = idFor(user);
+  const notifications = read(NOTIFICATIONS_KEY).filter(item => item.user === id && !item.read).length;
+  const messages = read(MESSAGES_KEY).filter(item => item.to === id && !item.read).length;
+  return { notifications, messages };
+}
+
 export async function sendMessage({ from, to, body }) {
   const text = String(body || '').trim();
   if (!text) throw new Error('Scrie un mesaj înainte să îl trimiți.');
