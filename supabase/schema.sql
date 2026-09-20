@@ -220,6 +220,8 @@ drop policy if exists "public can register" on public.members;
 create policy "members public can register" on public.members for insert to anon, authenticated with check (true);
 drop policy if exists "staff manage members" on public.members;
 create policy "staff manage members" on public.members for all to authenticated using (public.is_staff()) with check (public.is_staff());
+drop policy if exists "member owns member row" on public.members;
+create policy "member owns member row" on public.members for update to authenticated using (id = auth.uid()) with check (id = auth.uid());
 
 drop policy if exists "published directory read" on public.directory_items;
 create policy "published directory read" on public.directory_items for select to anon, authenticated using (status = 'published' or public.is_staff());
