@@ -18,6 +18,7 @@ Servește repository-ul cu un server static, de exemplu `python3 -m http.server 
 ## Structura aplicației
 
 - `src/main.js` rămâne orchestratorul temporar al rutelor și al compatibilității UI; logica persistentă nu trebuie adăugată aici.
+- `src/data/demo-content.js` conține exclusiv seed-urile de demo; nu este sursa datelor de producție.
 - `src/services/app-state.js` este sursa unică pentru profil, preferințele Feed și sincronizarea locală/Supabase.
 - `src/services/member-repository.js` definește contractul de acces la membri: căutare, filtre, paginare și actualizare; în producție query-ul este server-side, iar demo-ul folosește fallback local.
 - `src/services/auth.js`, `directory.js`, `needs.js`, `suggestions.js`, `notifications.js` izolează autentificarea și accesul la date; serviciile folosesc Supabase configurat sau fallback-ul demo.
