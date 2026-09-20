@@ -44,17 +44,22 @@ export const listSpaces = options => listContent('spaces', options);
 export const listEvents = options => listContent('events', options);
 
 export async function listModerationPosts({ status = '' } = {}) {
+  let localRows = [];
+  try { localRows = JSON.parse(localStorage.getItem(LOCAL_POSTS_KEY) || '[]'); } catch {}
+  const matchesStatus = row => !status || row.status === status;
   const supabase = await supabaseClient();
   if (supabase) {
     let query = supabase.from(TABLES.posts).select('*', { count: 'exact' });
     if (status) query = query.eq('status', status);
     const { data, count, error } = await query.order('created_at', { ascending: false });
     if (error) throw error;
-    return { data: data || [], count: count || 0, source: 'supabase' };
+    const remoteRows = data || [];
+    const remoteIds = new Set(remoteRows.map(row => String(row.id)));
+    const demoRows = localRows.filter(row => matchesStatus(row) && !remoteIds.has(String(row.id)));
+    const merged = [...remoteRows, ...demoRows].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+    return { data: merged, count: (count || 0) + demoRows.length, source: 'supabase+demo' };
   }
-  let rows = [];
-  try { rows = JSON.parse(localStorage.getItem(LOCAL_POSTS_KEY) || '[]'); } catch {}
-  return { data: rows.filter(row => !status || row.status === status), count: rows.length, source: 'demo' };
+  return { data: localRows.filter(matchesStatus), count: localRows.filter(matchesStatus).length, source: 'demo' };
 }
 
 export async function updatePostStatus(id, status) {
