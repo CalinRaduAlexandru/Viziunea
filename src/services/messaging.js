@@ -45,3 +45,10 @@ export async function listNotifications(user) {
   }
   return { data: read(NOTIFICATIONS_KEY).filter(notification => notification.user === idFor(user)).sort((a, b) => b.created_at.localeCompare(a.created_at)), source: 'demo' };
 }
+
+export async function notifyMention({ from, to, body, postTitle }) {
+  if (!to?.email || to.email === from?.email) return null;
+  const notification = { id: `demo-notification-${crypto.randomUUID()}`, user: idFor(to), type: 'mention', title: `${from?.user_metadata?.full_name || from?.email || 'Un membru'} te-a menționat`, body: `${body} · în „${postTitle}”`, created_at: new Date().toISOString(), read: false };
+  write(NOTIFICATIONS_KEY, [notification, ...read(NOTIFICATIONS_KEY)]);
+  return notification;
+}
