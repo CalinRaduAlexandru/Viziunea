@@ -13,7 +13,7 @@ function paginate(rows, page, pageSize) {
   return { data: rows.slice(from, from + pageSize), count: rows.length, page, pageSize, source: 'demo' };
 }
 function demoRows(kind) {
-  if (kind === 'posts') return FEED_POSTS.map((post, index) => ({ id: `demo-post-${index + 1}`, title: post.title, body: post.body, post_type: 'update', city: post.city, interest: post.interest, interests: [post.interest], status: 'published', created_at: post.time, author_name: post.author }));
+  if (kind === 'posts') return FEED_POSTS.map((post, index) => ({ id: `demo-post-${index + 1}`, title: post.title, body: post.body, post_type: 'update', city: post.city, interest: post.interest, interests: post.interests || [post.interest], image_url: post.image_url || null, status: 'published', created_at: post.time, author_name: post.author }));
   const category = kind === 'projects' ? 'proiecte' : kind === 'spaces' ? 'spatii' : kind === 'events' ? 'evenimente' : 'oameni';
   return (DEMO_RESULTS[category] || []).map((item, index) => ({ id: `demo-${kind}-${index + 1}`, title: item.title, description: item.desc, city: item.meta, status: 'published' }));
 }
@@ -85,6 +85,7 @@ export async function createPost(input, user = null) {
     represented_name: input.represented_name || null,
     contact_method: input.contact_method || null,
     contact_value: input.contact_value || null,
+    image_url: input.image_url || null,
     status: 'pending',
   };
   if (!payload.title || !payload.body) throw new Error('Completează titlul și descrierea.');

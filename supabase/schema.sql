@@ -420,6 +420,7 @@ create table if not exists public.community_posts (
   represented_name text,
   contact_method text check (contact_method is null or contact_method in ('platform','email','phone','whatsapp','website')),
   contact_value text,
+  image_url text,
   status text not null default 'pending' check (status in ('pending','published','rejected','archived')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -437,10 +438,11 @@ end $$;
 alter table public.community_posts add column if not exists represented_name text;
 alter table public.community_posts add column if not exists contact_method text;
 alter table public.community_posts add column if not exists contact_value text;
+alter table public.community_posts add column if not exists image_url text;
 
 -- Canonical posts table is community_posts; this stable public read contract avoids duplicated post data.
 create or replace view public.posts as
-select id, author_id, title, body, post_type, city, interest, interests, event_date, entity_type, representation_type, represented_name, contact_method, status, created_at, updated_at
+select id, author_id, title, body, post_type, city, interest, interests, event_date, entity_type, representation_type, represented_name, contact_method, contact_value, image_url, status, created_at, updated_at
 from public.community_posts
 where status = 'published';
 create index if not exists community_posts_feed on public.community_posts (status, city, interest, created_at desc);
