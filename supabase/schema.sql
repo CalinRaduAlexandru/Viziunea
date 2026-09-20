@@ -366,3 +366,25 @@ create policy "staff moderate posts" on public.community_posts for delete to aut
 grant select, insert, update, delete on public.profile_roles, public.profile_interests, public.feed_preferences to authenticated;
 grant select on public.community_posts to anon, authenticated;
 grant insert, update, delete on public.community_posts to authenticated;
+
+-- A member may edit identity/preferences, never their own moderation decision.
+revoke insert, update on public.profiles from authenticated;
+grant insert (id, display_name, city, county, country, roles, interests) on public.profiles to authenticated;
+grant update (display_name, city, county, country, roles, interests) on public.profiles to authenticated;
+create or replace function public.moderate_profile(target_id uuid, next_status text)
+returns public.profiles language plpgsql security definer set search_path = public
+as $$
+declare result public.profiles;
+begin
+  if not public.is_staff() then raise exception 'Only staff can moderate profiles'; end if;
+  if next_status not in ('pending','approved','rejected') then raise exception 'Invalid moderation status'; end if;
+  update public.profiles set moderation_status = next_status where id = target_id returning * into result;
+  if result.id is null then raise exception 'Profile not found'; end if;
+  return result;
+end;
+$$;
+grant execute on function public.moderate_profile(uuid,text) to authenticated;
+drop trigger if exists feed_preferences_updated_at on public.feed_preferences;
+create trigger feed_preferences_updated_at before update on public.feed_preferences for each row execute function public.set_updated_at();
+drop trigger if exists community_posts_updated_at on public.community_posts;
+create trigger community_posts_updated_at before update on public.community_posts for each row execute function public.set_updated_at();

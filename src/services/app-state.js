@@ -100,3 +100,24 @@ export async function saveFeedToSupabase(feed, user = null) {
   if (error) throw error;
   return { persisted: true, mode: 'supabase' };
 }
+
+export async function hydrateStateFromSupabase(user = null) {
+  const supabase = await createClient();
+  if (!supabase || !user?.id || String(user.id).startsWith('demo:')) return false;
+  const [{ data: profile }, { data: feed }] = await Promise.all([
+    supabase.from('profiles').select('display_name,city,roles,interests').eq('id', user.id).maybeSingle(),
+    supabase.from('feed_preferences').select('city,radius_km,interests').eq('profile_id', user.id).maybeSingle(),
+  ]);
+  if (profile) {
+    Object.assign(profileState, { displayName: profile.display_name || '', city: profile.city || profileState.city, roles: profile.roles || [], interests: profile.interests || [] });
+    writeJson(PROFILE_STORAGE_KEY, profileState);
+  }
+  if (feed) {
+    Object.assign(feedState, { city: feed.city || profileState.city, radius: feed.radius_km || 50, interests: feed.interests || [] });
+    writeJson(FEED_STORAGE_KEY, feedState);
+  } else if (profile) {
+    Object.assign(feedState, { city: profileState.city, interests: [...profileState.interests] });
+    writeJson(FEED_STORAGE_KEY, feedState);
+  }
+  return Boolean(profile || feed);
+}
