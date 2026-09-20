@@ -9,7 +9,7 @@ Servește repository-ul cu un server static, de exemplu `python3 -m http.server 
 ## Configurare Supabase
 
 1. Creează un proiect Supabase și copiază Project URL și cheia publică `anon` în `src/config.js` (`supabaseUrl`, `supabaseAnonKey`). Nu introduce cheia `service_role` în frontend.
-2. Rulează integral `supabase/schema.sql` în SQL Editor. Scriptul definește tabelele, indexurile, trigger-ele, view-ul anonim, politicile RLS și date demo pentru director.
+2. Rulează integral `supabase/schema.sql` în SQL Editor. Pentru proiectele deja existente, rulează apoi migrațiile din `supabase/migrations/` în ordine numerică. Scriptul definește tabelele, indexurile, trigger-ele, view-ul anonim, politicile RLS și date demo pentru director.
 3. În Supabase Auth, activează autentificarea prin email și adaugă URL-urile aplicației la Site URL / Redirect URLs. Magic link-ul folosește ruta `/auth/`.
 4. Autentifică o dată contul care va administra aplicația. Apoi rulează în SQL Editor instrucțiunea comentată de la finalul `schema.sql`, cu emailul administratorului, pentru a-l adăuga în `staff_users`. Drepturile staff nu pot fi acordate din client.
 
@@ -21,9 +21,11 @@ Servește repository-ul cu un server static, de exemplu `python3 -m http.server 
 - `src/data/demo-content.js` conține exclusiv seed-urile de demo; nu este sursa datelor de producție.
 - `src/services/app-state.js` este sursa unică pentru profil, preferințele Feed și sincronizarea locală/Supabase.
 - `src/services/member-repository.js` definește contractul de acces la membri: căutare, filtre, paginare și actualizare; în producție query-ul este server-side, iar demo-ul folosește fallback local.
+- `src/services/profile-repository.js` este granița oficială pentru membri; `member-repository.js` rămâne temporar adaptor de compatibilitate în timpul migrării către `profiles`.
+- `src/services/social-repository.js` și `src/services/conversation-repository.js` definesc contractele persistente pentru salvări, reacții, comentarii și conversații; fallback-ul demo rămâne local doar pentru dezvoltare.
 - `src/services/content-repository.js` definește contractul comun pentru postări, proiecte, spații și evenimente; fiecare listă acceptă paginare și filtre și folosește demo fallback doar când Supabase nu este configurat.
 - `src/services/auth.js`, `directory.js`, `needs.js`, `suggestions.js`, `notifications.js` izolează autentificarea și accesul la date; serviciile folosesc Supabase configurat sau fallback-ul demo.
-- `supabase/schema.sql` este sursa modelului persistent. Rolurile și interesele sunt extensibile prin `profile_roles` și `profile_interests`, preferințele prin `feed_preferences`, iar conținutul comunității prin `community_posts` (contractul de citire `posts`), `projects`, `spaces` și `events`.
+- `supabase/schema.sql` este bootstrap-ul modelului persistent; schimbările ulterioare se adaugă în `supabase/migrations/`. Rolurile și interesele sunt extensibile prin `profile_roles` și `profile_interests`, preferințele prin `feed_preferences`, iar conținutul comunității prin `community_posts` (contractul de citire `posts`), `projects`, `spaces` și `events`.
 - Orice tabel listat pentru utilizatori trebuie să folosească `page`, `pageSize`, filtre în query și `count`, nu să descarce toată baza în browser.
 - `/` prezintă Viziunea și onboarding-ul; `/auth` autentifică; `/admin` oferă taburile Membri, Nevoi, Sugestii și Director.
 

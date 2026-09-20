@@ -75,24 +75,12 @@ export async function saveProfileToSupabase(profile, user = null) {
   const { error } = await supabase.from('profiles').upsert({
     id: user.id,
     display_name: user.user_metadata?.full_name || profile.displayName || '',
+    email: String(user.email || '').trim().toLowerCase(),
     city: profile.city || null,
     interests: profile.interests || [],
     roles: profile.roles || [],
   });
   if (error) throw error;
-  const memberPayload = {
-    name: user.user_metadata?.full_name || profile.displayName || user.email?.split('@')[0] || 'Membru Viziunea',
-    email: String(user.email || '').trim().toLowerCase(),
-    city: profile.city || null,
-    roles: profile.roles || [],
-    interests: profile.interests || [],
-  };
-  const { data: updatedMember, error: memberUpdateError } = await supabase.from('members').update(memberPayload).eq('id', user.id).select('id');
-  if (memberUpdateError) throw memberUpdateError;
-  if (!updatedMember?.length) {
-    const { error: memberInsertError } = await supabase.from('members').insert({ id: user.id, ...memberPayload, role: 'member', status: 'pending' });
-    if (memberInsertError) throw memberInsertError;
-  }
   await supabase.from('profile_roles').delete().eq('profile_id', user.id);
   await supabase.from('profile_interests').delete().eq('profile_id', user.id);
   if (profile.roles?.length) {

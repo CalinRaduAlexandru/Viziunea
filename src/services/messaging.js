@@ -1,4 +1,5 @@
 import { createClient } from './supabase.js';
+import { getOrCreateDirectConversation } from './conversation-repository.js';
 
 const MESSAGES_KEY = 'viziunea.messages.demo.v1';
 const NOTIFICATIONS_KEY = 'viziunea.notifications.demo.v1';
@@ -20,7 +21,8 @@ export async function sendMessage({ from, to, body }) {
   if (!text) throw new Error('Scrie un mesaj înainte să îl trimiți.');
   const supabase = await supabaseClient();
   if (supabase && from?.id && to?.id && !String(from.id).startsWith('demo:') && !String(to.id).startsWith('demo:')) {
-    const { data, error } = await supabase.from('messages').insert({ sender_id: from.id, recipient_id: to.id, body: text }).select().single();
+    const conversation = await getOrCreateDirectConversation(from, to.id);
+    const { data, error } = await supabase.from('messages').insert({ conversation_id: conversation.id, sender_id: from.id, recipient_id: to.id, body: text }).select().single();
     if (error) throw error;
     await supabase.from('notifications').insert({ user_id: to.id, type: 'message', title: `Mesaj nou de la ${from.user_metadata?.full_name || from.email}`, body: text, related_id: data.id });
     return { ...data, persisted: true, source: 'supabase' };

@@ -37,28 +37,28 @@ export async function listMembers({ page = 1, pageSize = 25, ...filters } = {}) 
     const from = Math.max(0, (page - 1) * pageSize);
     return { data: all.slice(from, from + pageSize), count: all.length, page, pageSize, source: 'demo' };
   }
-  let query = supabase.from('members').select('id,name,email,city,roles,interests,status,admin_note,created_at,updated_at', { count: 'exact' });
+  let query = supabase.from('profiles').select('id,display_name,email,phone,city,roles,interests,moderation_status,admin_note,created_at,updated_at,last_seen_at', { count: 'exact' });
   if (filters.search) {
     const safeSearch = String(filters.search).replace(/[%,()]/g, ' ').trim();
-    if (safeSearch) query = query.or(`name.ilike.%${safeSearch}%,email.ilike.%${safeSearch}%`);
+    if (safeSearch) query = query.or(`display_name.ilike.%${safeSearch}%,email.ilike.%${safeSearch}%`);
   }
   if (filters.city) query = query.eq('city', filters.city);
-  if (filters.status) query = query.eq('status', filters.status === 'Activ' ? 'active' : filters.status === 'În așteptare' ? 'pending' : 'rejected');
+  if (filters.status) query = query.eq('moderation_status', filters.status === 'Activ' ? 'approved' : filters.status === 'În așteptare' ? 'pending' : 'rejected');
   if (filters.role) query = query.contains('roles', [filters.role]);
   if (filters.interest) query = query.contains('interests', [filters.interest]);
   const from = Math.max(0, (page - 1) * pageSize);
   const { data, count, error } = await query.order('created_at', { ascending: false }).range(from, from + pageSize - 1);
   if (error) throw error;
-  return { data: data || [], count: count || 0, page, pageSize, source: 'supabase' };
+  return { data: (data || []).map(profile => ({ ...profile, name: profile.display_name || 'Membru', status: profile.moderation_status, active: profile.last_seen_at || '—' })), count: count || 0, page, pageSize, source: 'supabase' };
 }
 
 export async function updateMember(id, changes) {
   const supabase = await supabaseClient();
   if (!supabase || String(id).startsWith('m-')) return { ...changes, persisted: false };
-  const payload = { ...changes };
-  if (changes.status) payload.status = changes.status === 'Activ' ? 'active' : changes.status === 'În așteptare' ? 'pending' : 'rejected';
-  if (changes.note !== undefined) { payload.admin_note = changes.note; delete payload.note; }
-  const { data, error } = await supabase.from('members').update(payload).eq('id', id).select().single();
+  const payload = {};
+  if (changes.status) payload.moderation_status = changes.status === 'Activ' ? 'approved' : changes.status === 'În așteptare' ? 'pending' : 'rejected';
+  if (changes.note !== undefined) payload.admin_note = changes.note;
+  const { data, error } = await supabase.from('profiles').update(payload).eq('id', id).select().single();
   if (error) throw error;
   return { ...data, persisted: true };
 }
