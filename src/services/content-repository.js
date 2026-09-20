@@ -43,6 +43,34 @@ export const listProjects = options => listContent('projects', options);
 export const listSpaces = options => listContent('spaces', options);
 export const listEvents = options => listContent('events', options);
 
+export async function listModerationPosts({ status = '' } = {}) {
+  const supabase = await supabaseClient();
+  if (supabase) {
+    let query = supabase.from(TABLES.posts).select('*', { count: 'exact' });
+    if (status) query = query.eq('status', status);
+    const { data, count, error } = await query.order('created_at', { ascending: false });
+    if (error) throw error;
+    return { data: data || [], count: count || 0, source: 'supabase' };
+  }
+  let rows = [];
+  try { rows = JSON.parse(localStorage.getItem(LOCAL_POSTS_KEY) || '[]'); } catch {}
+  return { data: rows.filter(row => !status || row.status === status), count: rows.length, source: 'demo' };
+}
+
+export async function updatePostStatus(id, status) {
+  const supabase = await supabaseClient();
+  if (supabase && !String(id).startsWith('demo-post-')) {
+    const { data, error } = await supabase.from(TABLES.posts).update({ status }).eq('id', id).select().single();
+    if (error) throw error;
+    return { ...data, persisted: true, source: 'supabase' };
+  }
+  let rows = [];
+  try { rows = JSON.parse(localStorage.getItem(LOCAL_POSTS_KEY) || '[]'); } catch {}
+  const updated = rows.map(row => row.id === id ? { ...row, status } : row);
+  localStorage.setItem(LOCAL_POSTS_KEY, JSON.stringify(updated));
+  return updated.find(row => row.id === id) || null;
+}
+
 export async function createPost(input, user = null) {
   const payload = {
     title: String(input.title || '').trim(),
