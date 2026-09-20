@@ -13,7 +13,7 @@ const DEFAULT_PROFILE = Object.freeze({
 const DEFAULT_FEED = Object.freeze({
   interests: [...DEFAULT_PROFILE.interests],
   city: DEFAULT_PROFILE.city,
-  radius: 50,
+  radius: 100,
 });
 
 function readJson(key, fallback = null) {
@@ -100,7 +100,7 @@ export async function saveFeedToSupabase(feed, user = null) {
   const { error } = await supabase.from('feed_preferences').upsert({
     profile_id: user.id,
     city: feed.city || null,
-    radius_km: Number(feed.radius) || 50,
+    radius_km: Number(feed.radius) || 100,
     interests: feed.interests || [],
   });
   if (error) throw error;
@@ -119,7 +119,7 @@ export async function hydrateStateFromSupabase(user = null) {
     writeJson(PROFILE_STORAGE_KEY, profileState);
   }
   if (feed) {
-    Object.assign(feedState, { city: feed.city || profileState.city, radius: feed.radius_km || 50, interests: feed.interests || [] });
+    Object.assign(feedState, { city: feed.city || profileState.city, radius: feed.radius_km || 100, interests: feed.interests || [] });
     writeJson(FEED_STORAGE_KEY, feedState);
   } else if (profile) {
     Object.assign(feedState, { city: profileState.city, interests: [...profileState.interests] });
