@@ -421,6 +421,10 @@ create table if not exists public.community_posts (
   contact_method text check (contact_method is null or contact_method in ('platform','email','phone','whatsapp','website')),
   contact_value text,
   image_url text,
+  location_label text,
+  latitude double precision,
+  longitude double precision,
+  place_id text,
   status text not null default 'pending' check (status in ('pending','published','rejected','archived')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -439,6 +443,10 @@ alter table public.community_posts add column if not exists represented_name tex
 alter table public.community_posts add column if not exists contact_method text;
 alter table public.community_posts add column if not exists contact_value text;
 alter table public.community_posts add column if not exists image_url text;
+alter table public.community_posts add column if not exists location_label text;
+alter table public.community_posts add column if not exists latitude double precision;
+alter table public.community_posts add column if not exists longitude double precision;
+alter table public.community_posts add column if not exists place_id text;
 
 -- Canonical posts table is community_posts; this stable public read contract avoids duplicated post data.
 create or replace view public.posts as
