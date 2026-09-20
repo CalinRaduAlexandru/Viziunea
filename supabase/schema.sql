@@ -35,6 +35,10 @@ create table if not exists public.members (
 );
 create unique index if not exists members_email_unique on public.members (email);
 alter table public.members add column if not exists admin_note text not null default '';
+alter table public.members add column if not exists roles text[] not null default '{}';
+alter table public.members add column if not exists interests text[] not null default '{}';
+alter table public.members drop constraint if exists members_status_check;
+alter table public.members add constraint members_status_check check (status in ('active','pending','rejected','inactive'));
 create index if not exists members_role_created_at on public.members (role, created_at desc);
 
 create table if not exists public.directory_items (
@@ -284,3 +288,81 @@ on conflict (slug) do update set title=excluded.title, description=excluded.desc
 -- insert into public.staff_users (user_id, role)
 -- select id, 'admin' from auth.users where email = 'admin@example.com'
 -- on conflict (user_id) do update set role = excluded.role;
+
+-- Scalable profile/preferences layer. These tables are intentionally normalized so
+-- new roles and interests do not require adding columns to profiles.
+alter table public.profiles add column if not exists roles text[] not null default '{}';
+alter table public.profiles add column if not exists interests text[] not null default '{}';
+alter table public.profiles add column if not exists moderation_status text not null default 'pending';
+do $$ begin
+  if not exists (select 1 from pg_constraint where conname = 'profiles_moderation_status_check') then
+    alter table public.profiles add constraint profiles_moderation_status_check check (moderation_status in ('pending','approved','rejected'));
+  end if;
+end $$;
+create index if not exists profiles_moderation_city on public.profiles (moderation_status, country, city);
+
+create table if not exists public.profile_roles (
+  profile_id uuid not null references public.profiles(id) on delete cascade,
+  role text not null check (length(trim(role)) between 2 and 80),
+  created_at timestamptz not null default now(),
+  primary key (profile_id, role)
+);
+create table if not exists public.profile_interests (
+  profile_id uuid not null references public.profiles(id) on delete cascade,
+  interest text not null check (length(trim(interest)) between 2 and 100),
+  created_at timestamptz not null default now(),
+  primary key (profile_id, interest)
+);
+create index if not exists profile_roles_role on public.profile_roles (role, profile_id);
+create index if not exists profile_interests_interest on public.profile_interests (interest, profile_id);
+
+create table if not exists public.feed_preferences (
+  profile_id uuid primary key references public.profiles(id) on delete cascade,
+  city text,
+  radius_km integer not null default 50 check (radius_km between 1 and 2000),
+  interests text[] not null default '{}',
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.community_posts (
+  id uuid primary key default gen_random_uuid(),
+  author_id uuid not null references public.profiles(id) on delete cascade,
+  title text not null check (length(trim(title)) between 2 and 180),
+  body text not null check (length(trim(body)) between 2 and 5000),
+  post_type text not null check (post_type in ('update','project','request','event','opportunity','offer')),
+  city text,
+  interest text,
+  status text not null default 'pending' check (status in ('pending','published','rejected','archived')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists community_posts_feed on public.community_posts (status, city, interest, created_at desc);
+create index if not exists community_posts_author on public.community_posts (author_id, created_at desc);
+
+create or replace function public.is_approved_member(target_id uuid default auth.uid())
+returns boolean language sql stable security definer set search_path = public
+as $$ select exists (select 1 from public.profiles where id = target_id and moderation_status = 'approved') $$;
+
+alter table public.profile_roles enable row level security;
+alter table public.profile_interests enable row level security;
+alter table public.feed_preferences enable row level security;
+alter table public.community_posts enable row level security;
+
+drop policy if exists "profile roles owner or staff" on public.profile_roles;
+create policy "profile roles owner or staff" on public.profile_roles for all to authenticated using (profile_id = auth.uid() or public.is_staff()) with check (profile_id = auth.uid() or public.is_staff());
+drop policy if exists "profile interests owner or staff" on public.profile_interests;
+create policy "profile interests owner or staff" on public.profile_interests for all to authenticated using (profile_id = auth.uid() or public.is_staff()) with check (profile_id = auth.uid() or public.is_staff());
+drop policy if exists "feed preferences owner" on public.feed_preferences;
+create policy "feed preferences owner" on public.feed_preferences for all to authenticated using (profile_id = auth.uid()) with check (profile_id = auth.uid());
+drop policy if exists "published posts read" on public.community_posts;
+create policy "published posts read" on public.community_posts for select to anon, authenticated using (status = 'published');
+drop policy if exists "approved members create posts" on public.community_posts;
+create policy "approved members create posts" on public.community_posts for insert to authenticated with check (author_id = auth.uid() and status = 'pending' and public.is_approved_member());
+drop policy if exists "authors update own posts" on public.community_posts;
+create policy "authors update own posts" on public.community_posts for update to authenticated using (author_id = auth.uid() or public.is_staff()) with check ((author_id = auth.uid() and status = 'pending') or public.is_staff());
+drop policy if exists "staff moderate posts" on public.community_posts;
+create policy "staff moderate posts" on public.community_posts for delete to authenticated using (public.is_staff());
+
+grant select, insert, update, delete on public.profile_roles, public.profile_interests, public.feed_preferences to authenticated;
+grant select on public.community_posts to anon, authenticated;
+grant insert, update, delete on public.community_posts to authenticated;

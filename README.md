@@ -17,10 +17,12 @@ Servește repository-ul cu un server static, de exemplu `python3 -m http.server 
 
 ## Structura aplicației
 
-- `src/main.js` gestionează navigarea și compune ecranele.
-- `src/views/orientation.js` conține ecranele MVP și escaparea conținutului dinamic.
+- `src/main.js` rămâne orchestratorul temporar al rutelor și al compatibilității UI; logica persistentă nu trebuie adăugată aici.
+- `src/services/app-state.js` este sursa unică pentru profil, preferințele Feed și sincronizarea locală/Supabase.
+- `src/services/member-repository.js` definește contractul de acces la membri: căutare, filtre, paginare și actualizare; în producție query-ul este server-side, iar demo-ul folosește fallback local.
 - `src/services/auth.js`, `directory.js`, `needs.js`, `suggestions.js`, `notifications.js` izolează autentificarea și accesul la date; serviciile folosesc Supabase configurat sau fallback-ul demo.
-- `supabase/schema.sql` este sursa modelului persistent. `members` rămâne tabel separat; directorul folosește entitatea generică `directory_items`.
+- `supabase/schema.sql` este sursa modelului persistent. Rolurile și interesele sunt extensibile prin `profile_roles` și `profile_interests`, preferințele prin `feed_preferences`, iar conținutul comunității prin `community_posts`.
+- Orice tabel listat pentru utilizatori trebuie să folosească `page`, `pageSize`, filtre în query și `count`, nu să descarce toată baza în browser.
 - `/` prezintă Viziunea și onboarding-ul; `/auth` autentifică; `/admin` oferă taburile Membri, Nevoi, Sugestii și Director.
 
 ## Potrivire geografică MVP
@@ -29,9 +31,11 @@ Directorul distinge `fixed`, `travels`, `remote`, `hybrid` și `location_indepen
 
 MVP-ul nu folosește hărți, geocoding sau coordonate lat/lng. Apropierea este estimată din oraș/județ/regiune, iar `travel_radius_km` și `max_distance_km` sunt păstrate pentru dezvoltarea următoarei etape, fără calcul geodezic. Fără locație introdusă, matching-ul nu impune o zonă.
 
-## Limite curente
+## Limite curente și reguli de scalare
 
-Matching-ul este determinist și local, fără AI/ML. Notificările sunt doar in-app; nu există email tranzacțional. Datele demo trăiesc în browserul curent și nu sincronizează între utilizatori. Pentru date persistente și fluxuri comunitare reale trebuie configurat Supabase, Auth și primul staff user. GitHub Pages poate găzdui aplicația statică; rutele folosesc fallback-ul SPA existent.
+Matching-ul este determinist și local, fără AI/ML. Notificările sunt doar in-app; nu există email tranzacțional. Datele demo trăiesc în browserul curent și nu sincronizează între utilizatori. Pentru date persistente și fluxuri comunitare reale trebuie configurat Supabase, Auth și primul staff user.
+
+Fundația pentru creștere este acum separată de fallback-ul demo: Supabase păstrează datele persistente, repository-urile sunt locul unic pentru query-uri, iar RLS controlează accesul. Pentru lansarea publică trebuie finalizate migrarea tuturor ecranelor către repository-uri, paginarea UI în `/admin`, validarea reală a moderatorului și testele end-to-end pentru politici RLS. Nu se adaugă câmpuri arbitrare în componente; câmpurile persistente se introduc prin migrare SQL și servicii tipizate.
 
 ## Publicare
 
