@@ -159,12 +159,27 @@ create table if not exists public.notifications (
   user_id uuid not null references auth.users(id) on delete cascade,
   need_id uuid references public.needs(id) on delete cascade,
   suggestion_id uuid references public.suggestions(id) on delete cascade,
+  type text not null default 'system',
+  related_id uuid,
   title text not null,
   body text not null,
   read_at timestamptz,
   created_at timestamptz not null default now()
 );
 create index if not exists notifications_user_created on public.notifications (user_id, created_at desc);
+alter table public.notifications add column if not exists type text not null default 'system';
+alter table public.notifications add column if not exists related_id uuid;
+
+create table if not exists public.messages (
+  id uuid primary key default gen_random_uuid(),
+  sender_id uuid not null references auth.users(id) on delete cascade,
+  recipient_id uuid not null references auth.users(id) on delete cascade,
+  body text not null check (length(trim(body)) between 1 and 5000),
+  read_at timestamptz,
+  created_at timestamptz not null default now()
+);
+create index if not exists messages_recipient_created on public.messages (recipient_id, created_at desc);
+create index if not exists messages_sender_created on public.messages (sender_id, created_at desc);
 
 create or replace function public.set_updated_at()
 returns trigger language plpgsql set search_path = public
@@ -206,6 +221,7 @@ alter table public.directory_items enable row level security;
 alter table public.needs enable row level security;
 alter table public.suggestions enable row level security;
 alter table public.notifications enable row level security;
+alter table public.messages enable row level security;
 
 drop policy if exists "profile owner read" on public.profiles;
 create policy "profile owner read" on public.profiles for select to authenticated using (id = auth.uid() or public.is_staff());
@@ -250,6 +266,15 @@ drop policy if exists "user mark own notifications" on public.notifications;
 create policy "user mark own notifications" on public.notifications for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 drop policy if exists "staff create notifications" on public.notifications;
 create policy "staff create notifications" on public.notifications for insert to authenticated with check (public.is_staff());
+drop policy if exists "message recipient notifications" on public.notifications;
+create policy "message recipient notifications" on public.notifications for insert to authenticated with check (type = 'message' and exists (select 1 from public.messages m where m.id = related_id and m.sender_id = auth.uid() and m.recipient_id = user_id));
+
+drop policy if exists "message participants read" on public.messages;
+create policy "message participants read" on public.messages for select to authenticated using (sender_id = auth.uid() or recipient_id = auth.uid());
+drop policy if exists "approved members send messages" on public.messages;
+create policy "approved members send messages" on public.messages for insert to authenticated with check (sender_id = auth.uid() and public.is_approved_member());
+drop policy if exists "recipient marks messages read" on public.messages;
+create policy "recipient marks messages read" on public.messages for update to authenticated using (recipient_id = auth.uid()) with check (recipient_id = auth.uid());
 
 grant select on public.directory_items to anon, authenticated;
 grant select on public.community_needs to anon, authenticated;
@@ -264,6 +289,7 @@ grant select, update on public.suggestions to authenticated;
 grant insert (need_id,suggestion_type,name,description,contact_url,note) on public.suggestions to authenticated;
 grant select, update on public.notifications to authenticated;
 grant insert on public.notifications to authenticated;
+grant select, insert, update on public.messages to authenticated;
 grant select on public.members to authenticated;
 grant update (status, admin_note) on public.members to authenticated;
 grant insert on public.members to anon, authenticated;
@@ -518,3 +544,11 @@ drop trigger if exists spaces_updated_at on public.spaces;
 create trigger spaces_updated_at before update on public.spaces for each row execute function public.set_updated_at();
 drop trigger if exists events_updated_at on public.events;
 create trigger events_updated_at before update on public.events for each row execute function public.set_updated_at();
+
+-- Development-only member seed. These rows make the two-account messaging flow testable
+-- before real Auth users are provisioned; remove or replace them before production launch.
+insert into public.members (name,email,city,role,status,roles,interests)
+values
+  ('Zametheea Popescu','zametheea@demo.viziunea.ro','București','member','active',array['Creator','Participant'],array['Artă','Experiențe']),
+  ('Radu Călin','radu.calin@demo.viziunea.ro','București','member','active',array['Creator','Participant'],array['Artă','Proiecte'])
+on conflict (email) do update set name=excluded.name, city=excluded.city, role=excluded.role, roles=excluded.roles, interests=excluded.interests;
