@@ -389,6 +389,7 @@ create table if not exists public.community_posts (
   event_date date,
   entity_type text not null default 'person' check (entity_type in ('person','project','space','event','opportunity','resource')),
   is_representative boolean not null default false,
+  representation_type text not null default 'proposal' check (representation_type in ('self','on_behalf','proposal')),
   represented_name text,
   contact_method text check (contact_method is null or contact_method in ('platform','email','phone','whatsapp','website')),
   contact_value text,
@@ -399,13 +400,19 @@ create table if not exists public.community_posts (
 alter table public.community_posts add column if not exists event_date date;
 alter table public.community_posts add column if not exists entity_type text not null default 'person';
 alter table public.community_posts add column if not exists is_representative boolean not null default false;
+alter table public.community_posts add column if not exists representation_type text not null default 'proposal';
+do $$ begin
+  if not exists (select 1 from pg_constraint where conname = 'community_posts_representation_type_check') then
+    alter table public.community_posts add constraint community_posts_representation_type_check check (representation_type in ('self','on_behalf','proposal'));
+  end if;
+end $$;
 alter table public.community_posts add column if not exists represented_name text;
 alter table public.community_posts add column if not exists contact_method text;
 alter table public.community_posts add column if not exists contact_value text;
 
 -- Canonical posts table is community_posts; this stable public read contract avoids duplicated post data.
 create or replace view public.posts as
-select id, author_id, title, body, post_type, city, interest, event_date, entity_type, is_representative, represented_name, contact_method, status, created_at, updated_at
+select id, author_id, title, body, post_type, city, interest, event_date, entity_type, representation_type, represented_name, contact_method, status, created_at, updated_at
 from public.community_posts
 where status = 'published';
 create index if not exists community_posts_feed on public.community_posts (status, city, interest, created_at desc);

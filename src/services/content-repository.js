@@ -52,7 +52,7 @@ export async function createPost(input, user = null) {
     interest: input.interest || null,
     event_date: input.event_date || null,
     entity_type: input.entity_type || 'person',
-    is_representative: Boolean(input.is_representative),
+    representation_type: input.representation_type || 'proposal',
     represented_name: input.represented_name || null,
     contact_method: input.contact_method || null,
     contact_value: input.contact_value || null,
