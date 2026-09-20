@@ -63,6 +63,12 @@ export async function markNotificationRead(id, user) {
   write(NOTIFICATIONS_KEY, read(NOTIFICATIONS_KEY).map(notification => notification.id === id && notification.user === idFor(user) ? { ...notification, read: true } : notification));
 }
 
+export async function markConversationRead(otherEmail, user) {
+  const userEmail = idFor(user);
+  write(MESSAGES_KEY, read(MESSAGES_KEY).map(message => message.to === userEmail && message.from === otherEmail ? { ...message, read: true } : message));
+  write(NOTIFICATIONS_KEY, read(NOTIFICATIONS_KEY).map(notification => notification.user === userEmail && (notification.sender_email === otherEmail || notification.title?.toLowerCase().includes(otherEmail.split('@')[0].split('.')[0])) ? { ...notification, read: true } : notification));
+}
+
 export async function notifyMention({ from, to, body, postTitle }) {
   if (!to?.email || to.email === from?.email) return null;
   const notification = { id: `demo-notification-${crypto.randomUUID()}`, user: idFor(to), type: 'mention', title: `${from?.user_metadata?.full_name || from?.email || 'Un membru'} te-a menționat`, body: `${body} · în „${postTitle}”`, created_at: new Date().toISOString(), read: false };
