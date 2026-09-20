@@ -27,7 +27,7 @@ export async function sendMessage({ from, to, body }) {
   }
   const message = { id: `demo-message-${crypto.randomUUID()}`, from: idFor(from), to: idFor(to), fromName: from?.user_metadata?.full_name || from?.email || 'Membru', toName: to?.user_metadata?.full_name || to?.email || 'Membru', body: text, created_at: new Date().toISOString(), read: false };
   write(MESSAGES_KEY, [message, ...read(MESSAGES_KEY)]);
-  const notification = { id: `demo-notification-${crypto.randomUUID()}`, user: idFor(to), type: 'message', title: `Mesaj nou de la ${message.fromName}`, body: text, related_id: message.id, created_at: message.created_at, read: false };
+  const notification = { id: `demo-notification-${crypto.randomUUID()}`, user: idFor(to), type: 'message', title: `Mesaj nou de la ${message.fromName}`, body: text, sender_email: message.from, related_id: message.id, created_at: message.created_at, read: false };
   write(NOTIFICATIONS_KEY, [notification, ...read(NOTIFICATIONS_KEY)]);
   return { ...message, persisted: true, source: 'demo' };
 }
@@ -51,6 +51,16 @@ export async function listNotifications(user) {
     return { data: data || [], source: 'supabase' };
   }
   return { data: read(NOTIFICATIONS_KEY).filter(notification => notification.user === idFor(user)).sort((a, b) => b.created_at.localeCompare(a.created_at)), source: 'demo' };
+}
+
+export async function markNotificationRead(id, user) {
+  const supabase = await supabaseClient();
+  if (supabase && user?.id && !String(user.id).startsWith('demo:')) {
+    const { error } = await supabase.from('notifications').update({ read_at: new Date().toISOString() }).eq('id', id).eq('user_id', user.id);
+    if (error) throw error;
+    return;
+  }
+  write(NOTIFICATIONS_KEY, read(NOTIFICATIONS_KEY).map(notification => notification.id === id && notification.user === idFor(user) ? { ...notification, read: true } : notification));
 }
 
 export async function notifyMention({ from, to, body, postTitle }) {
