@@ -2,6 +2,7 @@ import { createClient } from './supabase.js';
 
 export const PROFILE_STORAGE_KEY = 'viziunea.profile.demo.v1';
 export const FEED_STORAGE_KEY = 'viziunea.feed.demo.v1';
+export const FEED_INTEREST_OVERRIDE_KEY = 'viziunea.feed.interests.customized.v1';
 export const ADMIN_STORAGE_KEY = 'viziunea.admin.members.demo.v1';
 
 const DEFAULT_PROFILE = Object.freeze({
@@ -39,6 +40,20 @@ export function readFeed(profile = readProfile()) {
 
 export const profileState = readProfile();
 export const feedState = readFeed(profileState);
+
+export let feedInterestsCustomized = Boolean(readJson(FEED_INTEREST_OVERRIDE_KEY, false));
+
+export function syncFeedInterestsFromProfile(profile = profileState) {
+  if (feedInterestsCustomized) return false;
+  feedState.interests = [...(profile.interests || [])];
+  writeJson(FEED_STORAGE_KEY, feedState);
+  return true;
+}
+
+export function setFeedInterestsCustomized(value = true) {
+  feedInterestsCustomized = Boolean(value);
+  writeJson(FEED_INTEREST_OVERRIDE_KEY, feedInterestsCustomized);
+}
 
 export function saveProfile(profile) {
   Object.assign(profileState, profile);
@@ -122,8 +137,8 @@ export async function hydrateStateFromSupabase(user = null) {
     Object.assign(feedState, { city: feed.city || profileState.city, radius: feed.radius_km || 100, interests: feed.interests || [] });
     writeJson(FEED_STORAGE_KEY, feedState);
   } else if (profile) {
-    Object.assign(feedState, { city: profileState.city, interests: [...profileState.interests] });
-    writeJson(FEED_STORAGE_KEY, feedState);
+    Object.assign(feedState, { city: profileState.city });
   }
+  if (profile) syncFeedInterestsFromProfile(profileState);
   return Boolean(profile || feed);
 }
