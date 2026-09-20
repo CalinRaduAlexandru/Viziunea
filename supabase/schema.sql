@@ -416,7 +416,7 @@ create table if not exists public.community_posts (
   event_date date,
   entity_type text not null default 'person' check (entity_type in ('person','project','space','event','opportunity','resource')),
   is_representative boolean not null default false,
-  representation_type text not null default 'proposal' check (representation_type in ('self','on_behalf','proposal')),
+  representation_type text not null default 'founder' check (representation_type in ('founder','representative','collaborator','supporter','observer')),
   represented_name text,
   contact_method text check (contact_method is null or contact_method in ('platform','email','phone','whatsapp','website')),
   contact_value text,
@@ -433,10 +433,10 @@ alter table public.community_posts add column if not exists event_date date;
 alter table public.community_posts add column if not exists interests text[] not null default '{}';
 alter table public.community_posts add column if not exists entity_type text not null default 'person';
 alter table public.community_posts add column if not exists is_representative boolean not null default false;
-alter table public.community_posts add column if not exists representation_type text not null default 'proposal';
+alter table public.community_posts add column if not exists representation_type text not null default 'founder';
 do $$ begin
   if not exists (select 1 from pg_constraint where conname = 'community_posts_representation_type_check') then
-    alter table public.community_posts add constraint community_posts_representation_type_check check (representation_type in ('self','on_behalf','proposal'));
+    alter table public.community_posts add constraint community_posts_representation_type_check check (representation_type in ('founder','representative','collaborator','supporter','observer'));
   end if;
 end $$;
 alter table public.community_posts add column if not exists represented_name text;
