@@ -64,6 +64,11 @@ export function saveAdminMember(email, changes) {
   writeJson(ADMIN_STORAGE_KEY, savedMembers);
 }
 
+export function mergeSavedAdminMembers(members) {
+  const savedMembers = readJson(ADMIN_STORAGE_KEY, {}) || {};
+  return members.map(member => ({ ...member, ...(savedMembers[member.email] || {}) }));
+}
+
 export async function saveProfileToSupabase(profile, user = null) {
   const supabase = await createClient();
   if (!supabase || !user?.id || String(user.id).startsWith('demo:')) return { persisted: false, mode: 'local-demo' };

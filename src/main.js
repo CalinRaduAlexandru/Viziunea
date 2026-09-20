@@ -1,6 +1,6 @@
 import { getCurrentUser, signInWithEmail, signOut } from './services/auth.js';
 import { updateMember, listMembers } from './services/member-repository.js';
-import { profileState as demoProfile, feedState as demoFeed, saveProfile as saveProfileDemo, saveFeed as saveFeedDemo, saveAdminMember, saveProfileToSupabase, saveFeedToSupabase, hydrateStateFromSupabase, ADMIN_STORAGE_KEY as ADMIN_LOCAL_KEY } from './services/app-state.js';
+import { profileState as demoProfile, feedState as demoFeed, saveProfile as saveProfileDemo, saveFeed as saveFeedDemo, saveAdminMember, mergeSavedAdminMembers, saveProfileToSupabase, saveFeedToSupabase, hydrateStateFromSupabase } from './services/app-state.js';
 import { DEMO_RESULTS, FEED_POSTS, ADMIN_MEMBERS } from './data/demo-content.js';
 import { createPublicViews } from './views/public-pages.js';
 import { listContent, listPosts, listProjects, listSpaces, listEvents } from './services/content-repository.js';
@@ -39,7 +39,7 @@ function navbar(){
 }
 const footer=()=>`<footer class="site-footer"><span>Viziunea</span><span>Oameni · Spații · Idei · Împreună</span></footer>`;
 const DIRECTION_CONTENT = { 'servicii-creative-suport':['La spațiu','În deplasare','Remote'], 'educatie':['Cursuri','Mentorat','Formare profesională (practică)'], 'arta':['Proiectele membrilor','Hand-made la comandă','Spectacole produse','Spectacole găzduite','Resurse'], 'turism':['Locații partenere','Conferințe','Tabere & proiecte'], 'interventie-culturala':['Valori & viziuni','Propuneri legislative','Arhivă proiecte'], 'spatii-art-hub':['Studio Viziunea','Studio Cartierul Urban','Grădina Popânzac','Magazin ZAmulet','Sala de dans / cursuri','Ateliere & rezidențe'] };
-try { const savedMembers = JSON.parse(localStorage.getItem(ADMIN_LOCAL_KEY) || '{}'); ADMIN_MEMBERS.forEach(member => Object.assign(member, savedMembers[member.email] || {})); } catch {}
+ADMIN_MEMBERS.splice(0, ADMIN_MEMBERS.length, ...mergeSavedAdminMembers(ADMIN_MEMBERS));
 const demoMember = ADMIN_MEMBERS.find(member=>member.email==='zametheea@demo.viziunea.ro'); if(demoMember){demoMember.roles=demoProfile.roles;demoMember.interests=demoProfile.interests.join(', ');demoMember.city=demoProfile.city;}
 function normalizeAdminMember(member){return {...member,roles:Array.isArray(member.roles)?member.roles:member.role?[member.role]:[],interests:Array.isArray(member.interests)?member.interests.join(', '):(member.interests||''),registered:member.created_at?new Date(member.created_at).toLocaleDateString('ro-RO'):member.registered||'',active:member.active||'—',status:member.status==='active'?'Activ':member.status==='pending'?'În așteptare':'Dezaprobat'};}
 async function hydrateAdminMembers(){if(adminHydrationStarted)return;adminHydrationStarted=true;try{const result=await listMembers({page:1,pageSize:25});if(result.source!=='supabase'||!result.count){adminTotal=ADMIN_MEMBERS.length;return;}adminHasServerPage=true;adminPage=1;adminTotal=result.count;ADMIN_MEMBERS.splice(0,ADMIN_MEMBERS.length,...result.data.map(normalizeAdminMember));render();}catch(error){adminHydrationStarted=false;console.warn('Admin members sync unavailable',error);}}
