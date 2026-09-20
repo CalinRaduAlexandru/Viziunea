@@ -6,7 +6,6 @@ export async function searchLocations(query, signal) {
   const url = new URL(SEARCH_URL);
   url.searchParams.set('q', value);
   url.searchParams.set('limit', '6');
-  url.searchParams.set('lang', 'ro');
   const response = await fetch(url, { signal, headers: { Accept: 'application/json' } });
   if (!response.ok) throw new Error('Locațiile nu au putut fi încărcate.');
   const payload = await response.json();
