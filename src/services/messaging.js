@@ -8,10 +8,11 @@ async function supabaseClient() { if (!clientPromise) clientPromise = createClie
 function read(key) { try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; } }
 function write(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
 function idFor(user) { return String(user?.email || user?.id || '').trim().toLowerCase(); }
+function isValidNotification(notification, user) { const identity = idFor(user); return notification.user === identity && notification.sender_email !== identity; }
 
 export function getDemoUnreadCounts(user) {
   const id = idFor(user);
-  const notifications = read(NOTIFICATIONS_KEY).filter(item => item.user === id && !item.read).length;
+  const notifications = read(NOTIFICATIONS_KEY).filter(item => isValidNotification(item, user) && !item.read).length;
   const messages = read(MESSAGES_KEY).filter(item => item.to === id && !item.read).length;
   return { notifications, messages };
 }
@@ -55,7 +56,7 @@ export async function listNotifications(user) {
     if (error) throw error;
     return { data: data || [], source: 'supabase' };
   }
-  return { data: read(NOTIFICATIONS_KEY).filter(notification => notification.user === idFor(user)).sort((a, b) => b.created_at.localeCompare(a.created_at)), source: 'demo' };
+  return { data: read(NOTIFICATIONS_KEY).filter(notification => isValidNotification(notification, user)).sort((a, b) => b.created_at.localeCompare(a.created_at)), source: 'demo' };
 }
 
 export async function markNotificationRead(id, user) {
