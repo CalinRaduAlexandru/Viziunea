@@ -15,7 +15,12 @@ function paginate(rows, page, pageSize) {
 function demoRows(kind) {
   if (kind === 'posts') return FEED_POSTS.map((post, index) => ({ id: `demo-post-${index + 1}`, title: post.title, body: post.body, post_type: 'update', city: post.city, interest: post.interest, interests: post.interests || [post.interest], image_url: post.image_url || null, status: 'published', created_at: post.time, author_name: post.author }));
   const category = kind === 'projects' ? 'proiecte' : kind === 'spaces' ? 'spatii' : kind === 'events' ? 'evenimente' : 'oameni';
-  return (DEMO_RESULTS[category] || []).map((item, index) => ({ id: `demo-${kind}-${index + 1}`, title: item.title, description: item.desc, city: item.meta, status: 'published' }));
+  const authors = [
+    { name: 'Radu Călin', email: 'radu.calin@demo.viziunea.ro', city: 'București', role: 'Creator' },
+    { name: 'Zametheea Popescu', email: 'zametheea@demo.viziunea.ro', city: 'București', role: 'Creator · Participant' },
+    { name: 'Mara Enache', email: 'mara.enache@demo.viziunea.ro', city: 'Sibiu', role: 'Gazdă de spațiu · Partner' },
+  ];
+  return (DEMO_RESULTS[category] || []).map((item, index) => { const author = authors[index % authors.length]; return { id: `demo-${kind}-${index + 1}`, title: item.title, description: item.desc, city: item.meta, status: 'published', author_name: author.name, author_email: author.email, author_city: author.city, author_role: author.role }; });
 }
 function applyFilters(rows, filters = {}) {
   const search = String(filters.search || '').trim().toLocaleLowerCase('ro');
