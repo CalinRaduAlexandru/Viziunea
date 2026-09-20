@@ -323,7 +323,7 @@ insert into public.roles (slug,label) values
   ('creator','Creator'),('trainer','Trainer'),('participant','Participant'),('volunteer','Voluntar'),('partner','Partner'),('space-host','Gazdă de spațiu')
 on conflict (slug) do nothing;
 insert into public.interests (slug,label) values
-  ('art','Artă'),('education','Educație'),('experiences','Experiențe'),('tourism','Turism'),('events','Evenimente'),('projects','Proiecte'),('spaces','Spații')
+  ('art','Artă'),('education','Educație'),('experiences','Experiențe'),('tourism','Turism'),('events','Evenimente'),('projects','Proiecte'),('spaces','Spații'),('resources','Resurse / informații')
 on conflict (slug) do nothing;
 
 create table if not exists public.projects (
@@ -386,6 +386,7 @@ create table if not exists public.community_posts (
   post_type text not null check (post_type in ('update','project','request','event','opportunity','offer')),
   city text,
   interest text,
+  interests text[] not null default '{}',
   event_date date,
   entity_type text not null default 'person' check (entity_type in ('person','project','space','event','opportunity','resource')),
   is_representative boolean not null default false,
@@ -398,6 +399,7 @@ create table if not exists public.community_posts (
   updated_at timestamptz not null default now()
 );
 alter table public.community_posts add column if not exists event_date date;
+alter table public.community_posts add column if not exists interests text[] not null default '{}';
 alter table public.community_posts add column if not exists entity_type text not null default 'person';
 alter table public.community_posts add column if not exists is_representative boolean not null default false;
 alter table public.community_posts add column if not exists representation_type text not null default 'proposal';
@@ -412,7 +414,7 @@ alter table public.community_posts add column if not exists contact_value text;
 
 -- Canonical posts table is community_posts; this stable public read contract avoids duplicated post data.
 create or replace view public.posts as
-select id, author_id, title, body, post_type, city, interest, event_date, entity_type, representation_type, represented_name, contact_method, status, created_at, updated_at
+select id, author_id, title, body, post_type, city, interest, interests, event_date, entity_type, representation_type, represented_name, contact_method, status, created_at, updated_at
 from public.community_posts
 where status = 'published';
 create index if not exists community_posts_feed on public.community_posts (status, city, interest, created_at desc);

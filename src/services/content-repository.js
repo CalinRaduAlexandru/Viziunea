@@ -13,7 +13,7 @@ function paginate(rows, page, pageSize) {
   return { data: rows.slice(from, from + pageSize), count: rows.length, page, pageSize, source: 'demo' };
 }
 function demoRows(kind) {
-  if (kind === 'posts') return FEED_POSTS.map((post, index) => ({ id: `demo-post-${index + 1}`, title: post.title, body: post.body, post_type: 'update', city: post.city, interest: post.interest, status: 'published', created_at: post.time, author_name: post.author }));
+  if (kind === 'posts') return FEED_POSTS.map((post, index) => ({ id: `demo-post-${index + 1}`, title: post.title, body: post.body, post_type: 'update', city: post.city, interest: post.interest, interests: [post.interest], status: 'published', created_at: post.time, author_name: post.author }));
   const category = kind === 'projects' ? 'proiecte' : kind === 'spaces' ? 'spatii' : kind === 'events' ? 'evenimente' : 'oameni';
   return (DEMO_RESULTS[category] || []).map((item, index) => ({ id: `demo-${kind}-${index + 1}`, title: item.title, description: item.desc, city: item.meta, status: 'published' }));
 }
@@ -21,7 +21,7 @@ function applyFilters(rows, filters = {}) {
   const search = String(filters.search || '').trim().toLocaleLowerCase('ro');
   return rows.filter(row => {
     const text = `${row.title || ''} ${row.description || ''} ${row.body || ''} ${row.author_name || ''}`.toLocaleLowerCase('ro');
-    return (!search || text.includes(search)) && (!filters.city || row.city === filters.city) && (!filters.interest || row.interest === filters.interest);
+    return (!search || text.includes(search)) && (!filters.city || row.city === filters.city) && (!filters.interest || (row.interests || [row.interest]).includes(filters.interest));
   });
 }
 export async function listContent(kind, { page = 1, pageSize = 25, search = '', city = '', interest = '' } = {}) {
@@ -32,7 +32,7 @@ export async function listContent(kind, { page = 1, pageSize = 25, search = '', 
   let query = supabase.from(table).select('*', { count: 'exact' }).eq('status', 'published');
   if (search) query = query.ilike('title', `%${String(search).replace(/[%,()]/g, ' ')}%`);
   if (city) query = query.eq('city', city);
-  if (interest && kind === 'posts') query = query.eq('interest', interest);
+  if (interest && kind === 'posts') query = query.contains('interests', [interest]);
   const from = Math.max(0, (page - 1) * pageSize);
   const { data, count, error } = await query.order('created_at', { ascending: false }).range(from, from + pageSize - 1);
   if (error) throw error;
@@ -49,7 +49,8 @@ export async function createPost(input, user = null) {
     body: String(input.body || '').trim(),
     post_type: input.post_type || 'update',
     city: input.city || null,
-    interest: input.interest || null,
+    interests: Array.isArray(input.interests) ? input.interests.filter(Boolean) : [],
+    interest: Array.isArray(input.interests) ? input.interests[0] || null : null,
     event_date: input.event_date || null,
     entity_type: input.entity_type || 'person',
     representation_type: input.representation_type || 'proposal',
