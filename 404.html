@@ -4,16 +4,22 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="mobile-web-app-capable" content="yes" />
-  <link rel="stylesheet" href="/Viziunea/styles.css" />
   <title>Viziunea</title>
 </head>
 <body>
   <div id="app"></div>
   <script>
-    const base = '/Viziunea';
+    const base = location.pathname === '/Viziunea' || location.pathname.startsWith('/Viziunea/') ? '/Viziunea' : '';
     const requested = location.pathname.startsWith(base) ? location.pathname.slice(base.length) || '/' : '/';
     history.replaceState({}, '', `${base}/${requested.replace(/^\//, '')}${location.search}${location.hash}`.replace(`${base}//`, `${base}/`));
+    const stylesheet = document.createElement('link');
+    stylesheet.rel = 'stylesheet';
+    stylesheet.href = `${base}/styles.css`;
+    document.head.append(stylesheet);
+    const appScript = document.createElement('script');
+    appScript.type = 'module';
+    appScript.src = `${base}/src/main.js?v=20260921-4`;
+    document.body.append(appScript);
   </script>
-  <script type="module" src="/Viziunea/src/main.js?v=20260921-3"></script>
 </body>
 </html>
