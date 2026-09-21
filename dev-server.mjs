@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 const types = { '.html':'text/html', '.css':'text/css', '.js':'text/javascript', '.svg':'image/svg+xml', '.png':'image/png', '.webmanifest':'application/manifest+json' };
+const port = Number(process.env.PORT || 4173);
 
 createServer(async (request, response) => {
   const pathname = decodeURIComponent(new URL(request.url, 'http://localhost').pathname);
@@ -22,4 +23,4 @@ createServer(async (request, response) => {
     response.writeHead(200, { 'Content-Type': types[extname(servedFile)] || 'application/octet-stream' });
     response.end(body);
   }
-}).listen(4173, () => console.log('Viziunea local: http://localhost:4173/'));
+}).listen(port, () => console.log(`Viziunea local: http://localhost:${port}/`));

@@ -3,6 +3,14 @@ import { DEMO_RESULTS, FEED_POSTS } from '../data/demo-content.js';
 
 const TABLES = Object.freeze({ posts: 'community_posts', projects: 'projects', spaces: 'spaces', events: 'events' });
 const LOCAL_POSTS_KEY = 'viziunea.community.posts.demo.v1';
+const DEMO_PENDING_POST = {
+  id: 'demo-pending-ceramica', title: 'Atelier de ceramică pentru începători', post_type: 'update', entity_type: 'event',
+  city: 'București · Atelierul Nod, Str. Plantelor 18', event_date: '2026-10-12',
+  interests: ['Artă','Educație','Experiențe','Evenimente'], interest: 'Artă',
+  representation_type: 'self', represented_name: 'Atelierul Nod', contact_method: 'email', contact_value: 'hello@atelierulnod.ro',
+  body: 'Atelier practic de ceramică pentru persoane fără experiență, cu maximum 12 participanți. Fiecare participant va învăța bazele modelării manuale, va realiza un obiect simplu și îl va putea glazura ulterior. Atelierul durează aproximativ trei ore și include toate materialele necesare. Sunt disponibile 4 locuri gratuite pentru membri ai comunității Viziunea.',
+  author_name: 'Zametheea Popescu', author_email: 'zametheea@demo.viziunea.ro', status: 'pending', created_at: '2026-09-21T08:30:00.000Z'
+};
 let clientPromise;
 async function supabaseClient() {
   if (!clientPromise) clientPromise = createClient();
@@ -51,6 +59,10 @@ export const listEvents = options => listContent('events', options);
 export async function listModerationPosts({ status = '' } = {}) {
   let localRows = [];
   try { localRows = JSON.parse(localStorage.getItem(LOCAL_POSTS_KEY) || '[]'); } catch {}
+  if (!localRows.some(row => row.id === DEMO_PENDING_POST.id)) {
+    localRows.unshift(DEMO_PENDING_POST);
+    localStorage.setItem(LOCAL_POSTS_KEY, JSON.stringify(localRows));
+  }
   const matchesStatus = row => !status || row.status === status;
   const supabase = await supabaseClient();
   if (supabase) {

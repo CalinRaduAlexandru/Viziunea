@@ -9,6 +9,7 @@ const DEFAULT_PROFILE = Object.freeze({
   roles: ['Creator', 'Participant'],
   interests: ['Artă', 'Experiențe'],
   city: 'București',
+  useProfileDefaults: false,
 });
 
 const DEFAULT_FEED = Object.freeze({

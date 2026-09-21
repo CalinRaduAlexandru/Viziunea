@@ -34,6 +34,18 @@ export async function signInWithEmail(email, displayName = '') {
   return { mode:'otp', user:null };
 }
 
+export async function signUpWithEmail(email, displayName = '', password = '') {
+  const normalized = email.trim().toLowerCase();
+  if (!supabase) throw new Error('Înregistrarea este disponibilă doar când Supabase este configurat.');
+  const { data, error } = await supabase.auth.signUp({
+    email: normalized,
+    password,
+    options: { data: { full_name: displayName.trim() }, emailRedirectTo: new URL('../../auth/', import.meta.url).href },
+  });
+  if (error) throw error;
+  return { mode:'signup', user:data.user, session:data.session };
+}
+
 export async function signOut() {
   localStorage.removeItem(DEMO_USER_KEY);
   if (!supabase) return;
