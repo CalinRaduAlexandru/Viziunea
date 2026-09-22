@@ -123,7 +123,7 @@ function memberAvatarMarkup(email,name='Membru') {
   const avatar=getProfileAvatar(String(email||'').trim().toLowerCase());
   return `<span class="community-avatar">${avatar?`<img src="${esc(avatar)}" alt="Avatar ${esc(name)}" width="50" height="50">`:esc(name[0]||'M')}</span>`;
 }
-function isMemberPage(){return ['/profil','/feed','/mesaje','/notificari','/setari','/admin'].includes(path());}
+function isMemberPage(){return ['/profil','/feed','/mesaje','/notificari','/setari'].includes(path());}
 app.addEventListener('click',async event=>{
   if(!event.target.closest?.('[data-signout]'))return;
   const redirectHome=isMemberPage();
