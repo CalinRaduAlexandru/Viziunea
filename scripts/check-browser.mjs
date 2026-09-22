@@ -1,0 +1,60 @@
+import { chromium } from '@playwright/test';
+import { createServer } from 'node:http';
+import { readFile, stat } from 'node:fs/promises';
+import assert from 'node:assert/strict';
+
+const server = createServer(async (req, res) => {
+  let file = 'dist/' + new URL(req.url, 'http://localhost').pathname.replace(/^\/Viziunea\/?/, '');
+  try {
+    if ((await stat(file)).isDirectory()) file += '/index.html';
+    const body = await readFile(file);
+    res.setHeader('Content-Type', file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : file.endsWith('.html') ? 'text/html' : 'application/octet-stream');
+    res.end(body);
+  } catch { res.writeHead(404); res.end('Not found'); }
+});
+if (!process.env.TEST_URL) await new Promise(resolve=>server.listen(4189, resolve));
+const base = process.env.TEST_URL || 'http://localhost:4189/Viziunea/';
+const browser = await chromium.launch({ executablePath: process.env.CHROME_PATH || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true });
+const page = await browser.newPage();
+page.setDefaultTimeout(12000);
+const errors = [];
+page.on('pageerror', e=>errors.push(e.message));
+try {
+  assert.equal((await page.goto(base+'auth/')).status(), 200);
+  await page.getByRole('button', {name:'Continuă ca Zametheea'}).click();
+  await page.waitForURL('**/feed');
+  assert.equal((await page.goto(base+'profil/')).status(), 200);
+  await page.locator('.profile-hero h1').filter({hasText:'Zametheea'}).waitFor();
+  await page.locator('[data-profile-field="about"]').fill('Prezentarea Zametheei');
+  await page.locator('[data-profile-field="about"]').dispatchEvent('change');
+  const avatar = await page.evaluate(()=>{const c=document.createElement('canvas');c.width=2400;c.height=1600;c.getContext('2d').fillRect(0,0,2400,1600);return c.toDataURL('image/png').split(',')[1];});
+  await page.locator('[data-profile-image]').setInputFiles({name:'avatar.png',mimeType:'image/png',buffer:Buffer.from(avatar,'base64')});
+  await page.locator('.profile-avatar img').waitFor();
+  const box=await page.locator('.profile-avatar img').boundingBox();
+  assert.ok(box.width<=34&&box.height<=34);
+  await page.goto(base+'auth/');
+  await page.getByRole('button',{name:'Intră pe profilul Radu Călin'}).click();
+  await page.waitForURL('**/feed');
+  await page.goto(base+'profil/');
+  await page.locator('.profile-hero h1').filter({hasText:'Radu Călin'}).waitFor();
+  assert.equal(await page.locator('.profile-avatar img').count(),0);
+  assert.notEqual(await page.locator('[data-profile-field="about"]').inputValue(),'Prezentarea Zametheei');
+  await page.locator('[data-profile-field="about"]').fill('Prezentarea lui Radu');
+  await page.locator('[data-profile-field="about"]').dispatchEvent('change');
+  await page.reload();
+  await page.waitForFunction(()=>document.querySelector('[data-profile-field="about"]')?.value==='Prezentarea lui Radu');
+  await page.goto(base+'auth/');
+  await page.getByRole('button',{name:'Continuă ca Zametheea'}).click();
+  await page.waitForURL('**/feed');
+  await page.goto(base+'profil/');
+  await page.waitForFunction(()=>document.querySelector('[data-profile-field="about"]')?.value==='Prezentarea Zametheei');
+  await page.locator('.profile-avatar img').waitFor();
+  for(const route of ['feed/','exploreaza/','mesaje/','notificari/']) {
+    assert.equal((await page.goto(base+route)).status(),200);
+    await page.locator('.profile-avatar img').waitFor();
+    const rect=await page.locator('.profile-avatar img').boundingBox();
+    assert.ok(rect.width<=34&&rect.height<=34, route);
+  }
+  assert.deepEqual(errors,[]);
+  console.log('PASS: public routes, refresh, two accounts, independent profile data, isolated and bounded avatar, no JS errors');
+} finally { await browser.close();server.close(); }

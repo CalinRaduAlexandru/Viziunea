@@ -62,6 +62,7 @@ export function selectDemoAccount(email) {
   Object.assign(profileState, profile);
   for (const key of Object.keys(feedState)) delete feedState[key];
   Object.assign(feedState, feed);
+  feedInterestsCustomized = Boolean(readJson(accountKey(FEED_INTEREST_OVERRIDE_KEY + ':'), false));
   return { profile: profileState, feed: feedState };
 }
 
@@ -78,6 +79,7 @@ export function syncFeedInterestsFromProfile(profile = profileState) {
 export function setFeedInterestsCustomized(value = true) {
   feedInterestsCustomized = Boolean(value);
   writeJson(FEED_INTEREST_OVERRIDE_KEY, feedInterestsCustomized);
+  writeJson(accountKey(FEED_INTEREST_OVERRIDE_KEY + ':'), feedInterestsCustomized);
 }
 
 export function saveProfile(profile) {
