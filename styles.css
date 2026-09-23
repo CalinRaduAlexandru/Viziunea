@@ -550,3 +550,10 @@ body:has(main.public-home)::after{content:"";position:absolute;z-index:0;top:0;l
 .profile-interest-crm>p,.profile-crm-empty{margin:12px 0 0;color:var(--muted);font-size:12px}
 .profile-crm-empty{padding:24px;border:1px dashed #bdcdb9;border-radius:14px;background:#fffdf9}
 @media(max-width:700px){.profile-posts-crm-section{padding:18px;margin-top:24px}.profile-posts-crm-section>header{display:block}.profile-posts-crm-section>header>strong{display:block;margin-top:12px}.profile-post-crm{padding:15px}.profile-post-crm-heading{display:block}.profile-post-status{display:inline-flex;margin-top:12px}.profile-post-crm h3{font-size:24px}.profile-interest-crm li button{padding:5px 8px}}
+.profile-posts-page{padding-top:clamp(34px,6vw,78px)}
+.profile-posts-page-heading{position:relative;display:flex;align-items:end;justify-content:space-between;gap:24px;margin:0 auto 28px;max-width:960px;padding-bottom:22px;border-bottom:1px solid #cbd8c8}
+.profile-posts-page-heading h1{margin:7px 0 8px;font:italic 400 clamp(42px,5vw,68px)/.95 var(--serif);color:var(--ink)}
+.profile-posts-page-heading p{margin:0;max-width:620px;color:var(--muted);line-height:1.45}
+.profile-posts-page-heading>strong{color:var(--terra);font-size:13px;white-space:nowrap}
+.profile-posts-page>.profile-posts-crm-list{width:min(100%,960px);margin-inline:auto}
+@media(max-width:700px){.profile-posts-page{padding-top:28px}.profile-posts-page-heading{display:block;margin-bottom:22px}.profile-posts-page-heading>strong{display:block;margin-top:14px}}
