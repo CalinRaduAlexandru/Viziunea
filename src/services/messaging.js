@@ -81,3 +81,29 @@ export async function notifyMention({ from, to, body, postTitle }) {
   write(NOTIFICATIONS_KEY, [notification, ...read(NOTIFICATIONS_KEY)]);
   return notification;
 }
+
+export async function notifyPostInterest({ from, to, postId, postTitle }) {
+  if (!to?.email || !from?.email || to.email === from.email) return null;
+  const senderName = from?.user_metadata?.full_name || from?.name || from.email;
+  const createdAt = new Date().toISOString();
+  const notification = {
+    id: `demo-notification-${crypto.randomUUID()}`,
+    user: idFor(to),
+    type: 'interest',
+    title: `${senderName} este interesat(ă) de postarea ta`,
+    body: `„${postTitle}” · poți continua conversația din Comunitate.`,
+    sender_email: idFor(from),
+    recipient_email: idFor(to),
+    related_id: postId,
+    created_at: createdAt,
+    read: false
+  };
+  const supabase = await supabaseClient();
+  if (supabase && from?.id && to?.id && !String(from.id).startsWith('demo:') && !String(to.id).startsWith('demo:') && /^[0-9a-f-]{36}$/i.test(String(postId))) {
+    const { data, error } = await supabase.from('notifications').insert({ user_id: to.id, type: 'interest', title: notification.title, body: notification.body, related_id: postId }).select().single();
+    if (error) throw error;
+    return data;
+  }
+  write(NOTIFICATIONS_KEY, [notification, ...read(NOTIFICATIONS_KEY)]);
+  return notification;
+}
