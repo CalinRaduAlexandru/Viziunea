@@ -9,7 +9,7 @@ Servește repository-ul cu un server static, de exemplu `python3 -m http.server 
 ## Configurare Supabase
 
 1. Creează un proiect Supabase și copiază Project URL și cheia publică `anon` în `src/config.js` (`supabaseUrl`, `supabaseAnonKey`). Nu introduce cheia `service_role` în frontend.
-2. Rulează integral `supabase/schema.sql` în SQL Editor. Pentru proiectele deja existente, rulează apoi migrațiile din `supabase/migrations/` în ordine numerică. Scriptul definește tabelele, indexurile, trigger-ele, view-ul anonim, politicile RLS și date demo pentru director.
+2. Rulează integral `supabase/schema.sql` în SQL Editor. Pentru proiectele deja existente, rulează apoi migrațiile din `supabase/migrations/` în ordine numerică. Scriptul definește tabelele, indexurile, trigger-ele, view-ul anonim, politicile RLS și date demo pentru director. Pentru proiectul deja folosit de GitHub Pages, rulează în mod special și `supabase/migrations/20260924_production_persistence.sql`; acesta creează contractul persistent pentru salvări, reacții, interesați, comentarii, conversații și notificări fără să șteargă datele existente.
 3. În Supabase Auth, activează autentificarea prin email și adaugă URL-urile aplicației la Site URL / Redirect URLs. Magic link-ul folosește ruta `/auth/`.
 4. Autentifică o dată contul care va administra aplicația. Apoi rulează în SQL Editor instrucțiunea comentată de la finalul `schema.sql`, cu emailul administratorului, pentru a-l adăuga în `staff_users`. Drepturile staff nu pot fi acordate din client.
 
@@ -37,7 +37,7 @@ MVP-ul nu folosește hărți, geocoding sau coordonate lat/lng. Apropierea este 
 
 ## Limite curente și reguli de scalare
 
-Matching-ul este determinist și local, fără AI/ML. Notificările sunt doar in-app; nu există email tranzacțional. Datele demo trăiesc în browserul curent și nu sincronizează între utilizatori. Pentru date persistente și fluxuri comunitare reale trebuie rulat `supabase/schema.sql`, configurat Supabase Auth și creat primul staff user.
+Matching-ul este determinist și local, fără AI/ML. Notificările sunt doar in-app; nu există email tranzacțional. Datele conturilor marcate `@demo.viziunea.ro` rămân intenționat în browser până când aceste conturi sunt provisionate ca utilizatori reali în Supabase Auth. Astfel putem păstra seed-urile și testele locale până la momentul de clean slate. Conturile reale persistă în Supabase după aplicarea migrațiilor și configurarea RLS.
 
 Fundația pentru creștere este acum separată de fallback-ul demo: Supabase păstrează datele persistente, repository-urile sunt locul unic pentru query-uri, iar RLS controlează accesul. Pentru lansarea publică trebuie finalizate migrarea tuturor ecranelor către repository-uri, paginarea UI în `/admin`, validarea reală a moderatorului și testele end-to-end pentru politici RLS. Nu se adaugă câmpuri arbitrare în componente; câmpurile persistente se introduc prin migrare SQL și servicii tipizate.
 

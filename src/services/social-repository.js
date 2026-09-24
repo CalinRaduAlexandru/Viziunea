@@ -3,10 +3,12 @@ import { createClient } from './supabase.js';
 const SAVES_KEY = 'viziunea.post-saves.demo.v1';
 const LIKES_KEY = 'viziunea.post-likes.demo.v1';
 const COMMENTS_KEY = 'viziunea.post-comments.demo.v1';
+const INTERESTS_KEY = 'viziunea.post-interests.demo.v1';
 let clientPromise;
 async function supabaseClient() { if (!clientPromise) clientPromise = createClient(); return clientPromise; }
 const identity = user => user?.id || user?.email || '';
 const demo = user => !user || !user.id || String(user.id).startsWith('demo:');
+const uuid = value => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || ''));
 function read(key, fallback = []) { try { return JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback)); } catch { return fallback; } }
 function write(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
 
@@ -26,6 +28,7 @@ export async function togglePostSave(user, postId, saved) {
     write(SAVES_KEY, rows);
     return { saved, source: 'demo' };
   }
+  if (!uuid(postId)) return { saved, source: 'demo' };
   const supabase = await supabaseClient();
   if (!supabase) return { saved, source: 'demo' };
   if (saved) {
@@ -39,7 +42,7 @@ export async function togglePostSave(user, postId, saved) {
 }
 
 export async function listPostComments(postId, user = null) {
-  if (demo(user)) return read(COMMENTS_KEY).filter(comment => comment.post_id === postId).sort((a, b) => a.created_at.localeCompare(b.created_at));
+  if (demo(user) || !uuid(postId)) return read(COMMENTS_KEY).filter(comment => comment.post_id === postId).sort((a, b) => a.created_at.localeCompare(b.created_at));
   const supabase = await supabaseClient();
   if (!supabase) return [];
   const { data, error } = await supabase.from('post_comments').select('*').eq('post_id', postId).order('created_at', { ascending: true });
@@ -50,7 +53,7 @@ export async function listPostComments(postId, user = null) {
 export async function addPostComment({ postId, authorId, body, parentId = null }, user = null) {
   const text = String(body || '').trim();
   if (!text) throw new Error('Scrie un comentariu înainte să îl trimiți.');
-  if (demo(user)) {
+  if (demo(user) || !uuid(postId)) {
     const comment = { id: `demo-comment-${crypto.randomUUID()}`, post_id: postId, author_id: authorId || identity(user), body: text, parent_id: parentId, created_at: new Date().toISOString() };
     write(COMMENTS_KEY, [comment, ...read(COMMENTS_KEY)]);
     return comment;
@@ -69,10 +72,45 @@ export async function togglePostLike(user, postId, liked) {
     write(LIKES_KEY, rows);
     return { liked, source: 'demo' };
   }
+  if (!uuid(postId)) return { liked, source: 'demo' };
   const supabase = await supabaseClient();
   if (!supabase) return { liked, source: 'demo' };
   const query = supabase.from('post_likes');
   const result = liked ? await query.upsert({ profile_id: user.id, post_id: postId }) : await query.delete().eq('profile_id', user.id).eq('post_id', postId);
   if (result.error) throw result.error;
   return { liked, source: 'supabase' };
+}
+
+export async function listPostLikeIds(user) {
+  if (demo(user)) return read(LIKES_KEY).filter(row => row.profile_id === identity(user)).map(row => row.post_id);
+  const supabase = await supabaseClient();
+  if (!supabase) return [];
+  const { data, error } = await supabase.from('post_likes').select('post_id').eq('profile_id', user.id).order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data || []).map(row => row.post_id);
+}
+
+export async function listPostInterestIds(user) {
+  if (demo(user)) return read(INTERESTS_KEY).filter(row => row.profile_id === identity(user)).map(row => row.post_id);
+  const supabase = await supabaseClient();
+  if (!supabase) return [];
+  const { data, error } = await supabase.from('post_interests').select('post_id').eq('profile_id', user.id).order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data || []).map(row => row.post_id);
+}
+
+export async function togglePostInterest(user, postId, interested) {
+  if (demo(user)) {
+    const rows = read(INTERESTS_KEY).filter(row => !(row.profile_id === identity(user) && row.post_id === postId));
+    if (interested) rows.unshift({ profile_id: identity(user), post_id: postId, created_at: new Date().toISOString() });
+    write(INTERESTS_KEY, rows);
+    return { interested, source: 'demo' };
+  }
+  if (!uuid(postId)) return { interested, source: 'demo' };
+  const supabase = await supabaseClient();
+  if (!supabase) return { interested, source: 'demo' };
+  const query = supabase.from('post_interests');
+  const result = interested ? await query.upsert({ profile_id: user.id, post_id: postId }) : await query.delete().eq('profile_id', user.id).eq('post_id', postId);
+  if (result.error) throw result.error;
+  return { interested, source: 'supabase' };
 }

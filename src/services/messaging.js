@@ -71,19 +71,31 @@ export async function markNotificationRead(id, user) {
 
 export async function markConversationRead(otherEmail, user) {
   const userEmail = idFor(user);
+  const supabase = await supabaseClient();
+  if (supabase && user?.id && !String(user.id).startsWith('demo:')) {
+    const { error } = await supabase.from('messages').update({ read_at: new Date().toISOString() }).eq('recipient_id', user.id).is('read_at', null);
+    if (error) throw error;
+    return;
+  }
   write(MESSAGES_KEY, read(MESSAGES_KEY).map(message => message.to === userEmail && message.from === otherEmail ? { ...message, read: true } : message));
   write(NOTIFICATIONS_KEY, read(NOTIFICATIONS_KEY).map(notification => notification.user === userEmail && (notification.sender_email === otherEmail || notification.title?.toLowerCase().includes(otherEmail.split('@')[0].split('.')[0])) ? { ...notification, read: true } : notification));
 }
 
 export async function notifyMention({ from, to, body, postTitle }) {
-  if (!to?.email || to.email === from?.email) return null;
+  if ((!to?.email && !to?.id) || to.email === from?.email) return null;
+  const supabase = await supabaseClient();
+  if (supabase && from?.id && to?.id && !String(from.id).startsWith('demo:') && !String(to.id).startsWith('demo:')) {
+    const { data, error } = await supabase.from('notifications').insert({ user_id: to.id, sender_id: from.id, type: 'mention', title: `${from?.user_metadata?.full_name || from?.email || 'Un membru'} te-a menționat`, body: `${body} · în „${postTitle}”` }).select().single();
+    if (error) throw error;
+    return data;
+  }
   const notification = { id: `demo-notification-${crypto.randomUUID()}`, user: idFor(to), type: 'mention', title: `${from?.user_metadata?.full_name || from?.email || 'Un membru'} te-a menționat`, body: `${body} · în „${postTitle}”`, created_at: new Date().toISOString(), read: false };
   write(NOTIFICATIONS_KEY, [notification, ...read(NOTIFICATIONS_KEY)]);
   return notification;
 }
 
 export async function notifyPostInterest({ from, to, postId, postTitle }) {
-  if (!to?.email || !from?.email || to.email === from.email) return null;
+  if ((!to?.email && !to?.id) || !from?.email || to.email === from.email) return null;
   const senderName = from?.user_metadata?.full_name || from?.name || from.email;
   const createdAt = new Date().toISOString();
   const notification = {
@@ -100,7 +112,7 @@ export async function notifyPostInterest({ from, to, postId, postTitle }) {
   };
   const supabase = await supabaseClient();
   if (supabase && from?.id && to?.id && !String(from.id).startsWith('demo:') && !String(to.id).startsWith('demo:') && /^[0-9a-f-]{36}$/i.test(String(postId))) {
-    const { data, error } = await supabase.from('notifications').insert({ user_id: to.id, type: 'interest', title: notification.title, body: notification.body, related_id: postId }).select().single();
+    const { data, error } = await supabase.from('notifications').insert({ user_id: to.id, sender_id: from.id, type: 'interest', title: notification.title, body: notification.body, related_id: /^[0-9a-f-]{36}$/i.test(String(postId)) ? postId : null }).select().single();
     if (error) throw error;
     return data;
   }
