@@ -426,6 +426,8 @@ body.admin-mode #app{height:auto;min-height:100dvh;overflow:visible}body.admin-m
 .feed-post footer [data-feed-action="like"]:hover{background:#fff8f0;transform:scale(1.06)}
 .feed-post footer [data-feed-action="save"]{display:grid;place-items:center;min-width:38px;min-height:38px;padding:5px 8px;border:1px solid transparent;border-radius:10px;background:transparent}
 .feed-post footer [data-feed-action="save"]:hover{background:#f5f8f0}
+.feed-post footer [data-feed-action="save"]{font-size:22px;line-height:1}
+.feed-post footer [data-feed-action="save"].is-saved{color:var(--terra)}
 .feed-post footer [data-feed-action="save"] .post-save-icon{display:block;width:27px;height:27px;object-fit:contain}
 .feed-post footer [data-feed-action="save"].is-saved .post-save-icon{filter:none}
 .feed-like-confirmation{display:none}
