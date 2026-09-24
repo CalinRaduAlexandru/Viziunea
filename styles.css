@@ -567,3 +567,4 @@ body:has(main.public-home)::after{content:"";position:absolute;z-index:0;top:0;l
 .site-header .header-actions>.compact.nav-item-with-icon .nav-icon,.site-header .header-actions>.saved-nav-link .nav-icon{width:34px;height:34px;flex-basis:34px}
 .site-header .header-actions>.compact.nav-item-with-icon .nav-unread-badge,.site-header .header-actions>.saved-nav-link .nav-unread-badge{position:absolute;top:-7px;right:-8px;min-width:15px;height:15px;margin:0;padding:0 3px;font-size:8px;line-height:1}
 .feed-history-day{margin:14px 10px 2px;color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.feed-history-day:first-child{margin-top:0}
+.feed-post[hidden]{display:none!important}
