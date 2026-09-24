@@ -557,3 +557,7 @@ body:has(main.public-home)::after{content:"";position:absolute;z-index:0;top:0;l
 .profile-posts-page-heading>strong{color:var(--terra);font-size:13px;white-space:nowrap}
 .profile-posts-page>.profile-posts-crm-list{width:min(100%,960px);margin-inline:auto}
 @media(max-width:700px){.profile-posts-page{padding-top:28px}.profile-posts-page-heading{display:block;margin-bottom:22px}.profile-posts-page-heading>strong{display:block;margin-top:14px}}
+.site-header .header-actions{gap:16px}
+.site-header .header-actions>.compact.nav-item-with-icon,.site-header .header-actions>.saved-nav-link{position:relative}
+.site-header .header-actions>.compact.nav-item-with-icon .nav-icon,.site-header .header-actions>.saved-nav-link .nav-icon{width:34px;height:34px;flex-basis:34px}
+.site-header .header-actions>.compact.nav-item-with-icon .nav-unread-badge,.site-header .header-actions>.saved-nav-link .nav-unread-badge{position:absolute;top:-7px;right:-8px;min-width:15px;height:15px;margin:0;padding:0 3px;font-size:8px;line-height:1}
