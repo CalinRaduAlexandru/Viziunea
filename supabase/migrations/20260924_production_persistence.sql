@@ -25,6 +25,14 @@ create table if not exists public.messages (
   read_at timestamptz,
   created_at timestamptz not null default now()
 );
+alter table public.notifications add column if not exists need_id uuid;
+alter table public.notifications add column if not exists suggestion_id uuid;
+alter table public.notifications add column if not exists type text not null default 'system';
+alter table public.notifications add column if not exists related_id uuid;
+alter table public.notifications add column if not exists read_at timestamptz;
+alter table public.notifications add column if not exists created_at timestamptz not null default now();
+alter table public.messages add column if not exists read_at timestamptz;
+alter table public.messages add column if not exists created_at timestamptz not null default now();
 
 create table if not exists public.post_saves (
   profile_id uuid not null references public.profiles(id) on delete cascade,
