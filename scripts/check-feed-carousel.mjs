@@ -58,9 +58,12 @@ try {
   assert.equal(await visibleCard().count(), 0);
   await page.locator('[data-feed-history-open]').click();
   assert.equal(await page.locator('.feed-history-item').count(), total);
+  assert.equal(await page.locator('.feed-history-statuses').count(), total);
   assert.ok(await page.locator('.feed-history-day').count() >= 1);
   await page.locator('.feed-history-item').first().click();
   await page.locator('.feed-post-detail-dialog').waitFor();
+  assert.equal(await page.locator('.feed-detail-status').count(), 4);
+  assert.ok(await page.locator('.feed-detail-status').nth(3).textContent());
   await page.locator('.feed-post-detail-dialog .detail-close').click();
   await page.evaluate(() => {
     const key = 'viziunea.feed.seen.v1';
