@@ -483,7 +483,7 @@ body:has(main.public-home)::after{content:"";position:absolute;z-index:0;top:0;l
 .site-header .header-actions .guest-cta-secondary{padding:14px 2px 21px;color:var(--ink);font:italic 400 17px/1.05 'Instrument Serif',Georgia,serif}
 .site-header .header-actions .guest-cta-secondary .cta-label{position:relative}
 .site-header .header-actions .guest-cta-secondary .cta-label::after{content:"";position:absolute;left:-3%;bottom:-10px;width:106%;height:12px;background:#708366;-webkit-mask:url('assets/cta-underline.svg') center/100% 100% no-repeat;mask:url('assets/cta-underline.svg') center/100% 100% no-repeat;transform:rotate(-1deg)}
-.site-header,.mobile-nav{background:rgba(255,253,249,.95)}
+.site-header,.mobile-nav{background:rgba(255,253,249,.975)}
 .site-header{position:sticky;top:0;z-index:50}
 .site-header .header-actions .guest-cta:hover .cta-arrow{transform:translateX(4px) rotate(-4deg)}
 .site-header .header-actions .guest-cta:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
