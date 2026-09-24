@@ -496,6 +496,7 @@ body:has(main.public-home)::after{content:"";position:absolute;z-index:0;top:0;l
 @media(min-width:701px){.public-home .home-invitation h2{max-width:1000px!important;font-size:clamp(38px,3.4vw,54px)!important}}
 @media(min-width:701px){.site-footer>.footer-brand,.site-footer>.footer-motto,.site-footer>.footer-nav{transform:translateY(12px)}}
 .interested-member-link{padding:0;border:0;background:none;color:#182c58;font:inherit;font-weight:700;text-align:left;cursor:pointer}.interested-member-link:hover{text-decoration:underline;color:var(--terra)}.author-profile-social{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:12px;border-top:1px solid var(--line)}.author-profile-social>strong{color:var(--muted);font-size:12px}.author-profile-social .public-profile-links{margin-left:auto}
+@media(min-width:701px){.profile-posts-page-heading{display:flex;align-items:baseline;justify-content:flex-start;gap:20px;white-space:nowrap}.profile-posts-page-heading p{display:none}.profile-posts-page-heading h1{margin:0}.profile-posts-page-heading>strong{margin-left:auto}}
 @media(min-width:701px) and (max-width:1100px){
   .site-footer{min-height:330px;padding:125px 32px 28px;align-items:center}
   .site-footer .footer-nav{align-self:center;justify-content:center}
