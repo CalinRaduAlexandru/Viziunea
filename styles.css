@@ -422,6 +422,13 @@ body.admin-mode #app{height:auto;min-height:100dvh;overflow:visible}body.admin-m
 .feed-like-confirmation{display:inline-flex;align-items:center;margin-right:5px;color:#555957;font-size:12px;font-weight:600;white-space:nowrap}
 .community-avatar{display:inline-flex!important;align-items:center;justify-content:center;flex:0 0 50px;width:50px;height:50px;overflow:hidden;border-radius:50%;background:#d9efdc;color:#182c58;font:700 22px var(--sans)}
 .community-avatar img{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}
+.feed-post footer [data-feed-action="like"]{min-width:38px;min-height:38px;padding:5px 8px;border:1px solid transparent;border-radius:10px;background:transparent;font-size:24px;line-height:1;transition:transform .16s ease,background-color .16s ease,border-color .16s ease}
+.feed-post footer [data-feed-action="like"]:hover{background:#fff8f0;transform:scale(1.06)}
+.feed-post footer [data-feed-action="save"]{display:grid;place-items:center;min-width:38px;min-height:38px;padding:5px 8px;border:1px solid transparent;border-radius:10px;background:transparent}
+.feed-post footer [data-feed-action="save"]:hover{background:#f5f8f0}
+.feed-post footer [data-feed-action="save"] .post-save-icon{display:block;width:27px;height:27px;object-fit:contain}
+.feed-post footer [data-feed-action="save"].is-saved .post-save-icon{filter:none}
+.feed-like-confirmation{display:none}
 .premium-card-title:has(.community-avatar){display:flex;align-items:center;gap:14px}
 .detail-identity>.community-avatar,.author-profile-identity>.community-avatar{width:68px;height:68px;flex-basis:68px}
 @media(min-width:701px){#app>main.page:not(.admin-shell){box-sizing:border-box;width:min(100%,1000px);max-width:1000px;margin-inline:auto;padding-left:32px;padding-right:32px}#app>main.public-home{box-sizing:border-box;width:min(100%,1000px);max-width:1000px}}
