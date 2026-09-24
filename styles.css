@@ -197,12 +197,6 @@ html,body{overflow-x:clip}
 .interest-checkbox-grid label input[value="Oameni"] + span strong{font-size:0}
 .interest-checkbox-grid label input[value="Oameni"] + span strong::after{content:'Oameni';font-size:1.5rem}
 .desktop-nav{display:flex!important;align-items:center!important}
-.desktop-nav>*{order:3}
-.desktop-nav>a[href="/feed"],.desktop-nav>a[href="/"]{order:1}
-.desktop-nav>.nav-dropdown:has(.explore-panel){order:2}
-.desktop-nav>.nav-dropdown:not(:has(.explore-panel)){order:3}
-.desktop-nav>a[href="/resurse"]{order:4}
-.desktop-nav>a[href="/despre"]{order:5}
 .header-actions{display:flex;align-items:center;gap:10px}
 .member-cta,.login-cta{display:inline-flex;align-items:center;justify-content:center;padding:12px 17px;border-radius:10px;font-weight:800;text-decoration:none;white-space:nowrap}
 .member-cta{background:var(--terra);color:#fff}
